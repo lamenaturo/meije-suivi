@@ -514,9 +514,11 @@ function LandingPage({ onEnter }) {
 
 function Auth({ onLogin, onBack }) {
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [tab, setTab] = useState("login"); // "login" | "register"
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
+  const [prenom, setPrenom] = useState(""); const [confirmPwd, setConfirmPwd] = useState("");
   const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
+  const [resetSent, setResetSent] = useState(false); const [registerOk, setRegisterOk] = useState(false);
   if (showPrivacy) return <PolitiqueConfidentialite onClose={() => setShowPrivacy(false)} theme="p" />;
   const login = async () => {
     setError(""); setLoading(true);
@@ -534,6 +536,23 @@ function Auth({ onLogin, onBack }) {
     catch { setError("Email introuvable."); }
     setLoading(false);
   };
+  const register = async () => {
+    if (!prenom.trim()||!email.trim()||!password) { setError("Tous les champs sont obligatoires."); return; }
+    if (password.length < 6) { setError("Le mot de passe doit faire au moins 6 caractères."); return; }
+    if (password !== confirmPwd) { setError("Les mots de passe ne correspondent pas."); return; }
+    if (email === PRATICIENNE_EMAIL) { setError("Cet email n'est pas autorisé."); return; }
+    setError(""); setLoading(true);
+    try {
+      const c = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, "users", c.user.uid), { prenom:prenom.trim(), email:email.trim(), role:"cliente", statut:"pending", createdAt:new Date().toISOString(), complements:[], rappelsActifs:true });
+      await signOut(auth);
+      setRegisterOk(true);
+    } catch(e) {
+      if (e.code==="auth/email-already-in-use") setError("Un compte existe déjà avec cet email.");
+      else setError("Erreur : " + e.message);
+    }
+    setLoading(false);
+  };
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px 20px 40px", background:P.pBg, backgroundImage:"radial-gradient(ellipse at 30% 20%, rgba(200,133,108,0.12) 0%, transparent 55%)" }}>
       <div style={{ textAlign:"center", marginBottom:40 }}>
@@ -542,25 +561,65 @@ function Auth({ onLogin, onBack }) {
         <p style={{ color:P.pTextDim, fontSize:12, letterSpacing:"2px", textTransform:"uppercase" }}>Espace de suivi personnalisé</p>
       </div>
       <div style={{ width:"100%", maxWidth:380, background:P.pSurface, borderRadius:20, border:`1px solid ${P.pBorder}`, padding:"28px 24px" }}>
-        <p style={{ color:P.pTextDim, fontSize:11, textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:20, textAlign:"center" }}>Connexion</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <div>
-            <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Email</label>
-            <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="ton@email.fr" type="email" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
-          </div>
-          <div>
-            <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Mot de passe</label>
-            <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" type="password" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
-          </div>
-          {error && <div style={{ color:"#C4614A", fontSize:13, background:"rgba(196,97,74,0.1)", borderRadius:10, padding:"10px 14px" }}>{error}</div>}
-          {resetSent && <div style={{ color:P.pGreen, fontSize:13, background:P.pGreenDim, borderRadius:10, padding:"10px 14px" }}>Email envoyé !</div>}
-          <Btn onClick={login} disabled={loading} style={{ marginTop:4, width:"100%" }}>{loading?"…":"Se connecter"}</Btn>
-          <button onClick={reset} style={{ background:"none", border:"none", color:P.pTextDim, fontSize:12, cursor:"pointer", fontFamily:P.sans, textAlign:"center", textDecoration:"underline", padding:"4px 0" }}>Mot de passe oublié ?</button>
+        {/* Onglets */}
+        <div style={{ display:"flex", gap:0, marginBottom:24, background:P.pSurface2, borderRadius:10, padding:3 }}>
+          {[["login","Connexion"],["register","Créer mon espace"]].map(([k,l])=>(
+            <button key={k} onClick={()=>{setTab(k);setError("");setRegisterOk(false);}} style={{ flex:1, background:tab===k?P.pAccent:"transparent", color:tab===k?"#1C1410":P.pTextDim, border:"none", borderRadius:8, padding:"8px 0", fontSize:12, fontFamily:P.sans, fontWeight:tab===k?600:400, cursor:"pointer", transition:"all 0.2s" }}>{l}</button>
+          ))}
         </div>
+        {tab==="login"&&(
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            <div>
+              <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Email</label>
+              <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="ton@email.fr" type="email" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
+            </div>
+            <div>
+              <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Mot de passe</label>
+              <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" type="password" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
+            </div>
+            {error && <div style={{ color:"#C4614A", fontSize:13, background:"rgba(196,97,74,0.1)", borderRadius:10, padding:"10px 14px" }}>{error}</div>}
+            {resetSent && <div style={{ color:P.pGreen, fontSize:13, background:P.pGreenDim, borderRadius:10, padding:"10px 14px" }}>Email envoyé !</div>}
+            <Btn onClick={login} disabled={loading} style={{ marginTop:4, width:"100%" }}>{loading?"…":"Se connecter"}</Btn>
+            <button onClick={reset} style={{ background:"none", border:"none", color:P.pTextDim, fontSize:12, cursor:"pointer", fontFamily:P.sans, textAlign:"center", textDecoration:"underline", padding:"4px 0" }}>Mot de passe oublié ?</button>
+          </div>
+        )}
+        {tab==="register"&&(
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            {registerOk ? (
+              <div style={{ textAlign:"center", padding:"20px 0" }}>
+                <p style={{ fontSize:28, marginBottom:12 }}>🌿</p>
+                <p style={{ color:P.pText, fontSize:15, fontWeight:500, marginBottom:8 }}>Ton espace est créé !</p>
+                <p style={{ color:P.pTextDim, fontSize:13, lineHeight:1.6 }}>Meije sera notifiée. Tu pourras te connecter dès que ton accompagnement commencera.</p>
+                <button onClick={()=>{setTab("login");setRegisterOk(false);setPrenom("");setEmail("");setPassword("");setConfirmPwd("");}} style={{ marginTop:16, background:"none", border:"none", color:P.pAccent, fontFamily:P.sans, fontSize:13, cursor:"pointer", textDecoration:"underline" }}>Se connecter</button>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Prénom</label>
+                  <input value={prenom} onChange={e=>setPrenom(e.target.value)} placeholder="Ton prénom" style={iP("p")} />
+                </div>
+                <div>
+                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Email</label>
+                  <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="ton@email.fr" type="email" style={iP("p")} />
+                </div>
+                <div>
+                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Mot de passe</label>
+                  <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Min. 6 caractères" type="password" style={iP("p")} />
+                </div>
+                <div>
+                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Confirmer le mot de passe</label>
+                  <input value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} placeholder="••••••••" type="password" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&register()} />
+                </div>
+                {error && <div style={{ color:"#C4614A", fontSize:13, background:"rgba(196,97,74,0.1)", borderRadius:10, padding:"10px 14px" }}>{error}</div>}
+                <Btn onClick={register} disabled={loading} style={{ marginTop:4, width:"100%" }}>{loading?"Création…":"Créer mon espace"}</Btn>
+              </>
+            )}
+          </div>
+        )}
       </div>
       <div style={{ marginTop:20, textAlign:"center" }}>
-        <p style={{ color:P.pTextDim, fontSize:12 }}>Ton espace t'a été envoyé par Meije suite à ton accompagnement.</p>
-        <p style={{ color:P.pTextDim, fontSize:11, marginTop:12 }}>
+        {tab==="register"&&!registerOk&&<p style={{ color:P.pTextDim, fontSize:12, marginBottom:8 }}>Tu pourras te connecter une fois que Meije aura pris en charge ton dossier.</p>}
+        <p style={{ color:P.pTextDim, fontSize:11, marginTop:4 }}>
           Suivi confidentiel ·{" "}
           <button onClick={()=>setShowPrivacy(true)} style={{ background:"none", border:"none", color:P.pTextDim, fontSize:11, cursor:"pointer", fontFamily:P.sans, textDecoration:"underline" }}>Politique de confidentialité</button>
         </p>
@@ -1077,7 +1136,9 @@ function Praticienne({ user, onLogout }) {
     return()=>{u();um();ua();uan();udoc();};
   },[]);
 
-  const clientsFiltres=clients.filter(c=>(c.prenom||"").toLowerCase().includes(recherche.toLowerCase())||(c.email||"").toLowerCase().includes(recherche.toLowerCase()));
+  const clientsActifs=clients.filter(c=>c.statut!=="pending");
+  const clientsPending=clients.filter(c=>c.statut==="pending");
+  const clientsFiltres=clientsActifs.filter(c=>(c.prenom||"").toLowerCase().includes(recherche.toLowerCase())||(c.email||"").toLowerCase().includes(recherche.toLowerCase()));
 
   const select=useCallback(c=>{
     if(window._clientUnsubs)window._clientUnsubs.forEach(fn=>fn());
@@ -1107,6 +1168,11 @@ function Praticienne({ user, onLogout }) {
   const saveNote=async()=>{if(!privateNotes.trim())return;setSavingNote(true);await addDoc(collection(db,"notes_privees"),{clientUid:selected.uid,clientPrenom:selected.prenom,text:privateNotes.trim(),date:new Date().toISOString()});setPrivateNotes("");setSavingNote(false);showToast("Note enregistrée ✓");};
   const deleteNote=async(id)=>{await deleteDoc(doc(db,"notes_privees",id));};
   const saveStatut=async(uid,statut)=>{await updateDoc(doc(db,"users",uid),{statut});};
+  const deleteClient=async(c)=>{
+    if(!window.confirm(`Supprimer le compte de ${c.prenom} ? Cette action supprime son dossier Firestore. Son compte Firebase Auth restera inactif — tu peux le supprimer définitivement depuis la console Firebase si besoin.`))return;
+    await deleteDoc(doc(db,"users",c.uid));
+    showToast(`Compte de ${c.prenom} supprimé ✓`);
+  };
 
   // Répondre à un commentaire cliente sur un suivi
   const envoyerReponse=async(entryId)=>{
@@ -1220,8 +1286,32 @@ function Praticienne({ user, onLogout }) {
               <Btn onClick={createClient} disabled={creatingClient} variant="primary">{creatingClient?"Création…":"Créer son espace"}</Btn>
             </div>
           )}
-          <p style={{color:P.pTextDim,fontSize:12,marginBottom:12}}>{clients.length} consultante{clients.length>1?"s":""}</p>
-          {!recherche&&clients.length>5&&(
+          {clientsPending.length>0&&(
+            <div style={{marginBottom:20}}>
+              <p style={{color:"#C8A84B",fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:10}}>⏳ En attente ({clientsPending.length})</p>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {clientsPending.map(c=>(
+                  <div key={c.uid} style={{background:"rgba(200,168,75,0.06)",border:`1px solid rgba(200,168,75,0.25)`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <div style={{width:36,height:36,borderRadius:"50%",background:"rgba(200,168,75,0.12)",border:`1px solid rgba(200,168,75,0.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:P.serif,fontSize:16,color:"#C8A84B",flexShrink:0}}>{(c.prenom||"?")[0].toUpperCase()}</div>
+                      <div>
+                        <p style={{color:P.pText,fontSize:14,fontWeight:500}}>{c.prenom}</p>
+                        <p style={{color:P.pTextDim,fontSize:12,marginTop:1}}>{c.email}</p>
+                        <span style={{fontSize:10,color:"#C8A84B",background:"rgba(200,168,75,0.1)",border:"0.5px solid rgba(200,168,75,0.3)",borderRadius:20,padding:"1px 7px"}}>Compte créé — en attente</span>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <button onClick={()=>saveStatut(c.uid,"en cours").then(()=>{})} style={{background:P.pGreen+"18",border:`0.5px solid ${P.pGreen}44`,color:P.pGreen,borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:P.sans,cursor:"pointer"}}>✓ Activer</button>
+                      <button onClick={()=>deleteClient(c)} style={{background:"rgba(181,88,58,0.1)",border:"0.5px solid rgba(181,88,58,0.3)",color:"#B5583A",borderRadius:8,padding:"6px 10px",fontSize:13,fontFamily:P.sans,cursor:"pointer"}}>🗑</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{height:1,background:P.pBorder,margin:"16px 0"}}/>
+            </div>
+          )}
+          <p style={{color:P.pTextDim,fontSize:12,marginBottom:12}}>{clientsActifs.length} consultante{clientsActifs.length>1?"s":""}</p>
+          {!recherche&&clientsActifs.length>5&&(
             <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14}}>
               {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l=>{const has=clients.some(c=>(c.prenom||"").toUpperCase().startsWith(l));return has?<button key={l} onClick={()=>setRecherche(l)} style={{width:26,height:26,borderRadius:6,border:`1px solid ${P.pAccentBorder}`,background:P.pAccentDim,color:P.pAccent,fontSize:11,fontFamily:P.sans,fontWeight:500}}>{l}</button>:null;})}
             </div>
