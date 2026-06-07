@@ -10,9 +10,8 @@ const INSTAGRAM = process.env.REACT_APP_INSTAGRAM || "https://www.instagram.com/
 const CLOUD_NAME = "di45b4ymc";
 const UPLOAD_PRESET = "meije_naturo_public";
 const EMAILJS_SERVICE = "service_5bi57sr";
-const EMAILJS_TEMPLATE = "template_3w471uo";
-const EMAILJS_TEMPLATE_BIENVENUE = "template_im5mm8v";
 const EMAILJS_TEMPLATE_RAPPEL_SUIVI = "template_rappel_suivi";
+const EMAILJS_TEMPLATE_BIENVENUE = "template_im5mm8v";
 const EMAILJS_PUBLIC = "zpxiv3rkIbtfdqAQ6";
 
 const fixPdfUrl = (url) => url;
@@ -1484,8 +1483,8 @@ function Praticienne({ user, onLogout }) {
   const uploadProtocoleFiles=async(files)=>{setUploadingProtocole(true);const uploaded=[];for(const file of files){try{const r=await uploadToCloudinary(file,"meije-naturo/protocoles");uploaded.push(r);}catch(e){showToast("Erreur : "+e.message);}}setProtocoleFiles(prev=>[...prev,...uploaded]);setUploadingProtocole(false);};
   const uploadAnamnesePDF=async(files)=>{setUploadingAnamnese(true);const uploaded=[];for(const file of files){try{const r=await uploadToCloudinary(file,"meije-naturo/anamneses");uploaded.push(r);}catch(e){showToast("Erreur : "+e.message);}}setUploadedAnamnese(prev=>[...prev,...uploaded]);setUploadingAnamnese(false);};
   const saveAnamnesePDF=async()=>{if(!uploadedAnamnese.length)return;setSavingAnamnese(true);await addDoc(collection(db,"anamneses"),{userUid:selected.uid,userEmail:selected.email,userPrenom:selected.prenom,date:new Date().toISOString(),saisieParPraticienne:true,bilans:uploadedAnamnese});setUploadedAnamnese([]);setSavingAnamnese(false);setAnamneseMode("view");showToast("Document enregistré ✓");};
-  const sendProtocole=async()=>{if(!newProtocole.titre.trim())return;setSendingProtocole(true);await addDoc(collection(db,"protocoles"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,titre:newProtocole.titre.trim(),contenu:newProtocole.contenu.trim(),fichiers:protocoleFiles,date:new Date().toISOString()});try{await sendEmail(EMAILJS_TEMPLATE,{prenom:selected.prenom,to_email:selected.email,titre:newProtocole.titre.trim()});}catch{}setNewProtocole({titre:"",contenu:""});setProtocoleFiles([]);setSendingProtocole(false);showToast("Protocole envoyé à "+selected.prenom+" ✓");};
-  const sendMsg=async()=>{if(!newMsg.trim())return;setSending(true);await addDoc(collection(db,"messages"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,text:newMsg.trim(),date:new Date().toISOString()});try{await sendEmail(EMAILJS_TEMPLATE,{prenom:selected.prenom,to_email:selected.email});}catch{}setNewMsg("");setSending(false);showToast("Message envoyé ✓");};
+  const sendProtocole=async()=>{if(!newProtocole.titre.trim())return;setSendingProtocole(true);await addDoc(collection(db,"protocoles"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,titre:newProtocole.titre.trim(),contenu:newProtocole.contenu.trim(),fichiers:protocoleFiles,date:new Date().toISOString()});setNewProtocole({titre:"",contenu:""});setProtocoleFiles([]);setSendingProtocole(false);showToast("Protocole envoyé à "+selected.prenom+" ✓");};
+  const sendMsg=async()=>{if(!newMsg.trim())return;setSending(true);await addDoc(collection(db,"messages"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,text:newMsg.trim(),date:new Date().toISOString()});setNewMsg("");setSending(false);showToast("Message envoyé ✓");};
   const deleteProtocole=async(id)=>{if(!window.confirm("Supprimer ce protocole ?"))return;await deleteDoc(doc(db,"protocoles",id));showToast("Protocole supprimé");};
 
   const visibleActivity = recentActivity.filter(a => !clearedActivity.includes(a.id));
