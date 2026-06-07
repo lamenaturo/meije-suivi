@@ -1139,15 +1139,33 @@ function Cliente({ user, onLogout }) {
           {clientFolder==="suivi"&&(
             <div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">
               <Btn variant="cPrimary" onClick={()=>setView("suivi")} style={{width:"100%",marginBottom:12}}>Remplir mon suivi hebdomadaire →</Btn>
-              {entries.length>0&&<Btn variant="ghost" theme="c" onClick={()=>setView("historique")} style={{width:"100%",marginBottom:12}}>Voir mon historique</Btn>}
-              <div style={{borderTop:`1px solid ${P.cBorder}`,paddingTop:14,marginTop:4}}>
-                <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:10}}>Questionnaires de suivi RDV</p>
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+              {entries.length>0&&<Btn variant="ghost" theme="c" onClick={()=>setView("historique")} style={{width:"100%"}}>Voir mon historique</Btn>}
+            </div>
+          )}
+          {clientFolder==="documents"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("docs")} style={{width:"100%"}}>Gérer mes documents →</Btn></div>)}
+          {clientFolder==="questionnaire"&&(
+            <div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">
+              <Btn variant="cPrimary" onClick={()=>setAnamneseView(true)} style={{width:"100%",marginBottom:16}}>{hasAnamnese?"Modifier mon questionnaire de santé →":"Remplir mon questionnaire de santé →"}</Btn>
+              <div style={{borderTop:`1px solid ${P.cBorder}`,paddingTop:16}}>
+                <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:12}}>Suivi par consultation</p>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {[1,2,3,4,5,6].map(n=>{
                     const done=suiviRdvList.some(s=>s.numRdv===n);
+                    const prevDone=n===1||suiviRdvList.some(s=>s.numRdv===n-1);
+                    const locked=!prevDone&&!done;
                     return(
-                      <button key={n} onClick={()=>{setSuiviRdvNum(n);setSuiviRdvView(true);}} style={{padding:"10px 16px",borderRadius:20,border:`1.5px solid ${done?P.cGreenBorder:P.cBorder}`,background:done?P.cGreenDim:"transparent",color:done?P.cGreen:P.cTextMid,fontFamily:P.sans,fontSize:13,fontWeight:done?500:400,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
-                        {done?"✓ ":""}{`Consultation ${n}`}
+                      <button key={n} onClick={()=>{if(locked)return;setSuiviRdvNum(n);setSuiviRdvView(true);}}
+                        style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:12,border:`1.5px solid ${done?P.cGreenBorder:locked?"rgba(44,28,12,0.08)":P.cBorder}`,background:done?P.cGreenDim:locked?"rgba(44,28,12,0.03)":"transparent",cursor:locked?"not-allowed":"pointer",opacity:locked?0.5:1,transition:"all 0.2s"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontSize:16}}>{done?"✅":locked?"🔒":"📋"}</span>
+                          <div style={{textAlign:"left"}}>
+                            <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cText,fontSize:13,fontWeight:done?600:400}}>Consultation {n}</p>
+                            {done&&<p style={{color:P.cGreen,fontSize:11,marginTop:1}}>Rempli ✓</p>}
+                            {locked&&<p style={{color:P.cTextDim,fontSize:11,marginTop:1}}>Remplis d'abord la consultation {n-1}</p>}
+                            {!done&&!locked&&<p style={{color:P.cTextDim,fontSize:11,marginTop:1}}>À remplir avant le rendez-vous</p>}
+                          </div>
+                        </div>
+                        {!locked&&<span style={{color:done?P.cGreen:P.cTextDim,fontSize:16}}>›</span>}
                       </button>
                     );
                   })}
@@ -1155,8 +1173,6 @@ function Cliente({ user, onLogout }) {
               </div>
             </div>
           )}
-          {clientFolder==="documents"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("docs")} style={{width:"100%"}}>Gérer mes documents →</Btn></div>)}
-          {clientFolder==="questionnaire"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setAnamneseView(true)} style={{width:"100%"}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</Btn></div>)}
           {clientFolder==="evolution"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("evolution")} style={{width:"100%"}}>Voir mon évolution →</Btn></div>)}
           {clientFolder==="messages"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">{messages.length===0?<p style={{color:P.cTextDim,fontSize:13,textAlign:"center"}}>Aucun message pour l'instant 🌿</p>:messages.slice().reverse().slice(0,5).map(m=>(<div key={m.id} style={{background:P.cSurface2,borderRadius:12,padding:"12px 14px",marginBottom:8}}><p style={{color:P.cText,fontSize:13,lineHeight:1.6}}>{m.text}</p><p style={{color:P.cTextDim,fontSize:11,marginTop:4}}>{new Date(m.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p></div>))}</div>)}
         </div>
