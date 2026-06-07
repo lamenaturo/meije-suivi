@@ -10,7 +10,7 @@ const INSTAGRAM = process.env.REACT_APP_INSTAGRAM || "https://www.instagram.com/
 const CLOUD_NAME = "di45b4ymc";
 const UPLOAD_PRESET = "meije_naturo_public";
 const EMAILJS_SERVICE = "service_5bi57sr";
-const EMAILJS_TEMPLATE_RAPPEL_SUIVI = "template_rappel_suivi";
+const EMAILJS_TEMPLATE = "template_3w471uo";
 const EMAILJS_TEMPLATE_BIENVENUE = "template_im5mm8v";
 const EMAILJS_PUBLIC = "zpxiv3rkIbtfdqAQ6";
 
@@ -312,13 +312,15 @@ function ScoreDot({ value, size = 36 }) {
   return <div style={{ width:size, height:size, borderRadius:"50%", background:s ? s.color+"22":"rgba(255,255,255,0.06)", border:`1.5px solid ${s ? s.color:"rgba(255,255,255,0.1)"}`, display:"flex", alignItems:"center", justifyContent:"center", color:s ? s.color:"rgba(255,255,255,0.3)", fontFamily:P.serif, fontSize:size*0.42, fontWeight:600, flexShrink:0 }}>{value || "–"}</div>;
 }
 
-const iP = (theme = "p") => ({
-  width:"100%", background:theme==="p"?P.pSurface:P.cSurface, border:`1px solid ${theme==="p"?P.pBorder:P.cBorder}`,
-  borderRadius:10, padding:"12px 14px", color:theme==="p"?P.pText:P.cText, fontFamily:P.sans, fontSize:14,
-  outline:"none", boxSizing:"border-box", transition:"border-color 0.2s", WebkitAppearance:"none",
-});
+function iP(theme = "p") {
+  return {
+    width:"100%", background:theme==="p"?P.pSurface:P.cSurface, border:`1px solid ${theme==="p"?P.pBorder:P.cBorder}`,
+    borderRadius:10, padding:"12px 14px", color:theme==="p"?P.pText:P.cText, fontFamily:P.sans, fontSize:14,
+    outline:"none", boxSizing:"border-box", transition:"border-color 0.2s", WebkitAppearance:"none",
+  };
+}
 
-const Btn = ({ onClick, variant="primary", theme="p", disabled, children, style={}, small }) => {
+function Btn({ onClick, variant="primary", theme="p", disabled, children, style={}, small }) {
   const base = { padding:small?"8px 16px":"12px 22px", borderRadius:30, border:"none", cursor:disabled?"not-allowed":"pointer", fontFamily:P.sans, fontWeight:500, fontSize:small?12:14, transition:"all 0.2s", opacity:disabled?0.5:1, letterSpacing:"0.2px", ...style };
   const variants = {
     primary: { background:P.pAccent, color:"#1C1410", boxShadow:"0 3px 10px rgba(200,133,108,0.3), inset 0 1px 0 rgba(255,255,255,0.2)" },
@@ -329,7 +331,7 @@ const Btn = ({ onClick, variant="primary", theme="p", disabled, children, style=
     cGhost: { background:P.cSurface2, color:P.cTextMid, border:`1px solid ${P.cBorder}` },
   };
   return <button onClick={onClick} disabled={disabled} style={{...base,...variants[variant]}}>{children}</button>;
-};
+}
 
 function Section({ title, children, theme="p" }) {
   return <div style={{marginBottom:20}}><p style={{color:theme==="c"?P.cText:P.pText,fontSize:14,fontWeight:500,marginBottom:12,lineHeight:1.4}}>{title}</p>{children}</div>;
@@ -514,11 +516,9 @@ function LandingPage({ onEnter }) {
 
 function Auth({ onLogin, onBack }) {
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [tab, setTab] = useState("login");
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
-  const [prenom, setPrenom] = useState(""); const [confirmPwd, setConfirmPwd] = useState("");
   const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false); const [registerOk, setRegisterOk] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   if (showPrivacy) return <PolitiqueConfidentialite onClose={() => setShowPrivacy(false)} theme="p" />;
   const login = async () => {
     setError(""); setLoading(true);
@@ -536,23 +536,6 @@ function Auth({ onLogin, onBack }) {
     catch { setError("Email introuvable."); }
     setLoading(false);
   };
-  const register = async () => {
-    if (!prenom.trim()||!email.trim()||!password) { setError("Tous les champs sont obligatoires."); return; }
-    if (password.length < 6) { setError("Le mot de passe doit faire au moins 6 caractères."); return; }
-    if (password !== confirmPwd) { setError("Les mots de passe ne correspondent pas."); return; }
-    if (email === PRATICIENNE_EMAIL) { setError("Cet email n'est pas autorisé."); return; }
-    setError(""); setLoading(true);
-    try {
-      const c = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, "users", c.user.uid), { prenom:prenom.trim(), email:email.trim(), role:"cliente", statut:"pending", createdAt:new Date().toISOString(), complements:[], rappelsActifs:true });
-      await signOut(auth);
-      setRegisterOk(true);
-    } catch(e) {
-      if (e.code==="auth/email-already-in-use") setError("Un compte existe déjà avec cet email.");
-      else setError("Erreur : " + e.message);
-    }
-    setLoading(false);
-  };
   return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px 20px 40px", background:P.pBg, backgroundImage:"radial-gradient(ellipse at 30% 20%, rgba(200,133,108,0.12) 0%, transparent 55%)" }}>
       <div style={{ textAlign:"center", marginBottom:40 }}>
@@ -561,64 +544,25 @@ function Auth({ onLogin, onBack }) {
         <p style={{ color:P.pTextDim, fontSize:12, letterSpacing:"2px", textTransform:"uppercase" }}>Espace de suivi personnalisé</p>
       </div>
       <div style={{ width:"100%", maxWidth:380, background:P.pSurface, borderRadius:20, border:`1px solid ${P.pBorder}`, padding:"28px 24px" }}>
-        <div style={{ display:"flex", gap:0, marginBottom:24, background:P.pSurface2, borderRadius:10, padding:3 }}>
-          {[["login","Connexion"],["register","Créer mon espace"]].map(([k,l])=>(
-            <button key={k} onClick={()=>{setTab(k);setError("");setRegisterOk(false);}} style={{ flex:1, background:tab===k?P.pAccent:"transparent", color:tab===k?"#1C1410":P.pTextDim, border:"none", borderRadius:8, padding:"8px 0", fontSize:12, fontFamily:P.sans, fontWeight:tab===k?600:400, cursor:"pointer", transition:"all 0.2s" }}>{l}</button>
-          ))}
+        <p style={{ color:P.pTextDim, fontSize:11, textTransform:"uppercase", letterSpacing:"1.5px", marginBottom:20, textAlign:"center" }}>Connexion</p>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          <div>
+            <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Email</label>
+            <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="ton@email.fr" type="email" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
+          </div>
+          <div>
+            <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Mot de passe</label>
+            <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" type="password" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
+          </div>
+          {error && <div style={{ color:"#C4614A", fontSize:13, background:"rgba(196,97,74,0.1)", borderRadius:10, padding:"10px 14px" }}>{error}</div>}
+          {resetSent && <div style={{ color:P.pGreen, fontSize:13, background:P.pGreenDim, borderRadius:10, padding:"10px 14px" }}>Email envoyé !</div>}
+          <Btn onClick={login} disabled={loading} style={{ marginTop:4, width:"100%" }}>{loading?"…":"Se connecter"}</Btn>
+          <button onClick={reset} style={{ background:"none", border:"none", color:P.pTextDim, fontSize:12, cursor:"pointer", fontFamily:P.sans, textAlign:"center", textDecoration:"underline", padding:"4px 0" }}>Mot de passe oublié ?</button>
         </div>
-        {tab==="login"&&(
-          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-            <div>
-              <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Email</label>
-              <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="ton@email.fr" type="email" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
-            </div>
-            <div>
-              <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Mot de passe</label>
-              <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" type="password" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&login()} />
-            </div>
-            {error && <div style={{ color:"#C4614A", fontSize:13, background:"rgba(196,97,74,0.1)", borderRadius:10, padding:"10px 14px" }}>{error}</div>}
-            {resetSent && <div style={{ color:P.pGreen, fontSize:13, background:P.pGreenDim, borderRadius:10, padding:"10px 14px" }}>Email envoyé !</div>}
-            <Btn onClick={login} disabled={loading} style={{ marginTop:4, width:"100%" }}>{loading?"…":"Se connecter"}</Btn>
-            <button onClick={reset} style={{ background:"none", border:"none", color:P.pTextDim, fontSize:12, cursor:"pointer", fontFamily:P.sans, textAlign:"center", textDecoration:"underline", padding:"4px 0" }}>Mot de passe oublié ?</button>
-          </div>
-        )}
-        {tab==="register"&&(
-          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-            {registerOk ? (
-              <div style={{ textAlign:"center", padding:"20px 0" }}>
-                <p style={{ fontSize:28, marginBottom:12 }}>🌿</p>
-                <p style={{ color:P.pText, fontSize:15, fontWeight:500, marginBottom:8 }}>Ton espace est créé !</p>
-                <p style={{ color:P.pTextDim, fontSize:13, lineHeight:1.6 }}>Meije sera notifiée. Tu pourras te connecter dès que ton accompagnement commencera.</p>
-                <button onClick={()=>{setTab("login");setRegisterOk(false);setPrenom("");setEmail("");setPassword("");setConfirmPwd("");}} style={{ marginTop:16, background:"none", border:"none", color:P.pAccent, fontFamily:P.sans, fontSize:13, cursor:"pointer", textDecoration:"underline" }}>Se connecter</button>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Prénom</label>
-                  <input value={prenom} onChange={e=>setPrenom(e.target.value)} placeholder="Ton prénom" style={iP("p")} />
-                </div>
-                <div>
-                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Email</label>
-                  <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="ton@email.fr" type="email" style={iP("p")} />
-                </div>
-                <div>
-                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Mot de passe</label>
-                  <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Min. 6 caractères" type="password" style={iP("p")} />
-                </div>
-                <div>
-                  <label style={{ color:P.pTextDim, fontSize:10, textTransform:"uppercase", letterSpacing:"1.5px", display:"block", marginBottom:6 }}>Confirmer le mot de passe</label>
-                  <input value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} placeholder="••••••••" type="password" style={iP("p")} onKeyDown={e=>e.key==="Enter"&&register()} />
-                </div>
-                {error && <div style={{ color:"#C4614A", fontSize:13, background:"rgba(196,97,74,0.1)", borderRadius:10, padding:"10px 14px" }}>{error}</div>}
-                <Btn onClick={register} disabled={loading} style={{ marginTop:4, width:"100%" }}>{loading?"Création…":"Créer mon espace"}</Btn>
-              </>
-            )}
-          </div>
-        )}
       </div>
       <div style={{ marginTop:20, textAlign:"center" }}>
-        {tab==="register"&&!registerOk&&<p style={{ color:P.pTextDim, fontSize:12, marginBottom:8 }}>Tu pourras te connecter une fois que Meije aura pris en charge ton dossier.</p>}
-        <p style={{ color:P.pTextDim, fontSize:11, marginTop:4 }}>
+        <p style={{ color:P.pTextDim, fontSize:12 }}>Ton espace t'a été envoyé par Meije suite à ton accompagnement.</p>
+        <p style={{ color:P.pTextDim, fontSize:11, marginTop:12 }}>
           Suivi confidentiel ·{" "}
           <button onClick={()=>setShowPrivacy(true)} style={{ background:"none", border:"none", color:P.pTextDim, fontSize:11, cursor:"pointer", fontFamily:P.sans, textDecoration:"underline" }}>Politique de confidentialité</button>
         </p>
@@ -626,6 +570,7 @@ function Auth({ onLogin, onBack }) {
     </div>
   );
 }
+
 // ─── GRAPHIQUES ───────────────────────────────────────────────────────────────
 let chartJsLoaded = false;
 function loadChartJs(cb) {
@@ -721,161 +666,6 @@ function BottomNav({ items, active, onChange, theme }) {
   );
 }
 
-
-// ─── SUIVI RDV — Questionnaire de suivi par consultation ─────────────────────
-function SuiviRdv({ user, numRdv, existingData, onDone }) {
-  const [form, setForm] = useState({
-    problematique: existingData?.problematique || "",
-    memeProblematique: existingData?.memeProblematique || "",
-    evolution: existingData?.evolution || "",
-    sommeil: existingData?.sommeil || "",
-    digestion: existingData?.digestion || "",
-    cycle: existingData?.cycle || "",
-    anxiete: existingData?.anxiete || "",
-    thyroide: existingData?.thyroide || "",
-    complements: existingData?.complements || "",
-    difficultes: existingData?.difficultes || "",
-    positif: existingData?.positif || "",
-    commentaire: existingData?.commentaire || "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [toast, setToast] = useState("");
-  const showToast = (msg) => setToast(msg);
-  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(""), 3200); return () => clearTimeout(t); } }, [toast]);
-
-  const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
-
-  const submit = async () => {
-    setSaving(true);
-    const data = { ...form, userUid: user.uid, userEmail: user.email, userPrenom: user.prénom, numRdv, date: existingData?.date || new Date().toISOString() };
-    try {
-      if (existingData?.id) {
-        await updateDoc(doc(db, "suivis_rdv", existingData.id), data);
-      } else {
-        const { setDoc: sd } = await import("firebase/firestore");
-        await sd(doc(db, "suivis_rdv", `${user.uid}_rdv${numRdv}`), data);
-        try { await sendEmail(EMAILJS_TEMPLATE_BIENVENUE, { prenom: user.prénom, action: `a rempli son questionnaire de suivi consultation ${numRdv}`, to_email: PRATICIENNE_EMAIL }); } catch {}
-      }
-      setSaved(true);
-      showToast("Questionnaire envoyé à Meije ✓");
-      setTimeout(() => { setSaved(false); onDone(); }, 1800);
-    } catch (e) { showToast("Erreur : " + e.message); }
-    setSaving(false);
-  };
-
-  const downloadPDF = () => {
-    downloadSuiviRdvPDF({ ...form, numRdv, date: existingData?.date || new Date().toISOString() }, user.prénom);
-  };
-
-  const Field = ({ label, children }) => (
-    <div style={{ marginBottom: 20 }}>
-      <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>{label}</p>
-      {children}
-    </div>
-  );
-
-  const TA = ({ value, onChange, placeholder, rows = 3 }) => (
-    <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
-      style={{ width: "100%", background: P.cSurface, border: `1px solid ${P.cBorder}`, borderRadius: 10, padding: "12px 14px", color: P.cText, fontFamily: P.sans, fontSize: 13, resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }} />
-  );
-
-  const OUI_NON = ({ value, onChange }) => (
-    <div style={{ display: "flex", gap: 8 }}>
-      {["Oui, toujours", "En partie", "Non, ça a évolué"].map(opt => (
-        <button key={opt} onClick={() => onChange(opt)} style={{ padding: "9px 16px", borderRadius: 20, border: `1.5px solid ${value === opt ? P.cGreen : P.cBorder}`, background: value === opt ? P.cGreenDim : "transparent", color: value === opt ? P.cGreen : P.cTextMid, fontFamily: P.sans, fontSize: 12, fontWeight: value === opt ? 600 : 400, cursor: "pointer" }}>{opt}</button>
-      ))}
-    </div>
-  );
-
-  return (
-    <div style={{ minHeight: "100vh", background: P.cBg, paddingBottom: 80, fontFamily: P.sans }}>
-      {toast && <Toast message={toast} onClose={() => setToast("")} />}
-      <div style={{ background: P.cSurface, borderBottom: `1px solid ${P.cBorder}`, padding: "16px 20px", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <p style={{ fontFamily: P.serif, fontSize: 20, color: P.cText, fontWeight: 300 }}>Consultation {numRdv}</p>
-            <p style={{ fontSize: 11, color: P.cTextDim, letterSpacing: "1px", textTransform: "uppercase", marginTop: 1 }}>Questionnaire de suivi</p>
-          </div>
-          <button onClick={onDone} style={{ background: "none", border: "none", color: P.cTextDim, fontFamily: P.sans, fontSize: 12, cursor: "pointer" }}>← Retour</button>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px" }} className="fade-in">
-        <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 20 }}>
-          <p style={{ color: P.cAccent, fontSize: 13, fontWeight: 500, marginBottom: 6 }}>📋 Questionnaire de suivi — Consultation {numRdv}</p>
-          <p style={{ color: P.cTextDim, fontSize: 12, lineHeight: 1.6 }}>Remplis ce questionnaire avant votre prochain rendez-vous. Il permet à Meije de préparer la consultation et d'évaluer votre progression.</p>
-        </div>
-
-        {/* Problématique */}
-        <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
-          <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>🎯 Problématique principale</p>
-          <Field label="Quelle est votre problématique principale en ce moment ?">
-            <TA value={form.problematique} onChange={set("problematique")} placeholder="Décrivez votre problématique principale..." rows={3} />
-          </Field>
-          <Field label="Est-ce la même problématique qu'à la consultation précédente ?">
-            <OUI_NON value={form.memeProblematique} onChange={v => setForm(f => ({ ...f, memeProblematique: v }))} />
-          </Field>
-          <Field label="Comment a-t-elle évolué depuis notre dernière consultation ?">
-            <TA value={form.evolution} onChange={set("evolution")} placeholder="Mieux, pareil, plus difficile ? Décrivez..." rows={3} />
-          </Field>
-        </div>
-
-        {/* Axes de suivi */}
-        <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
-          <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>🔍 Axes de suivi</p>
-          <Field label="🌙 Sommeil — Comment dormez-vous depuis la dernière consultation ?">
-            <TA value={form.sommeil} onChange={set("sommeil")} placeholder="Endormissement, réveils, qualité, heures..." rows={2} />
-          </Field>
-          <Field label="🌿 Digestion — Comment est votre digestion ?">
-            <TA value={form.digestion} onChange={set("digestion")} placeholder="Transit, ballonnements, douleurs, confort après repas..." rows={2} />
-          </Field>
-          <Field label="🌸 Cycle — Où en êtes-vous avec votre cycle ?">
-            <TA value={form.cycle} onChange={set("cycle")} placeholder="Régularité, douleurs, SPM, phase actuelle..." rows={2} />
-          </Field>
-          <Field label="😮‍💨 Anxiété / Stress — Comment le gérez-vous ?">
-            <TA value={form.anxiete} onChange={set("anxiete")} placeholder="Niveau de stress, ruminations, crises, gestion..." rows={2} />
-          </Field>
-          <Field label="🔎 Thyroïde — Avez-vous remarqué des changements ?">
-            <TA value={form.thyroide} onChange={set("thyroide")} placeholder="Frilosité, fatigue matinale, cheveux, humeur, transit..." rows={2} />
-          </Field>
-        </div>
-
-        {/* Compléments et difficultés */}
-        <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
-          <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>💊 Compléments & Difficultés</p>
-          <Field label="Avez-vous pris vos compléments régulièrement ?">
-            <TA value={form.complements} onChange={set("complements")} placeholder="Lesquels pris, lesquels oubliés, réactions ressenties..." rows={2} />
-          </Field>
-          <Field label="Quelles difficultés avez-vous rencontrées ?">
-            <TA value={form.difficultes} onChange={set("difficultes")} placeholder="Adhérence au protocole, contraintes, effets inattendus..." rows={2} />
-          </Field>
-        </div>
-
-        {/* Positif + Commentaire */}
-        <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
-          <p style={{ color: P.cGreen, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>✨ Bilan & Message</p>
-          <Field label="Qu'est-ce qui a changé positivement depuis la dernière consultation ?">
-            <TA value={form.positif} onChange={set("positif")} placeholder="Même petites améliorations, notez-les !" rows={2} />
-          </Field>
-          <Field label="💬 Commentaire pour Meije">
-            <TA value={form.commentaire} onChange={set("commentaire")} placeholder="Tout ce que vous souhaitez partager avec Meije avant le rendez-vous..." rows={3} />
-          </Field>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Btn variant="cPrimary" onClick={submit} disabled={saving || saved} style={{ width: "100%" }}>
-            {saving ? "Envoi en cours…" : saved ? "Envoyé ✓" : "Envoyer à Meije →"}
-          </Btn>
-          {existingData && (
-            <Btn variant="ghost" theme="c" onClick={downloadPDF} style={{ width: "100%" }}>⬇ Télécharger en PDF</Btn>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── ESPACE CLIENTE ───────────────────────────────────────────────────────────
 const CLIENT_NAV = [
   { key:"home", label:"Accueil", icon:"🏠" },
@@ -901,10 +691,6 @@ function Cliente({ user, onLogout }) {
   const [uploadDocs,setUploadDocs]=useState([]);const [uploadingDocs,setUploadingDocs]=useState(false);
   const [saved,setSaved]=useState(false);const [loading,setLoading]=useState(true);
   const [toast,setToast]=useState("");const [anamneseView,setAnamneseView]=useState(false);
-  const [showAnamnesePopup,setShowAnamnesePopup]=useState(false);
-  const [suiviRdvView,setSuiviRdvView]=useState(false);
-  const [suiviRdvNum,setSuiviRdvNum]=useState(null);
-  const [suiviRdvList,setSuiviRdvList]=useState([]);
   const showToast=useCallback((msg)=>setToast(msg),[]);
 
   useEffect(()=>{
@@ -924,30 +710,8 @@ function Cliente({ user, onLogout }) {
       if(data?.complements)setComplements(data.complements);
       setUserProfil({profils:data?.profils||[],axesManuel:data?.axesManuel||[],axesExclus:data?.axesExclus||[],visioLink:data?.visioLink||""});
     });
-    const q7=query(collection(db,"suivis_rdv"),where("userUid","==",user.uid),orderBy("date","asc"));
-    const u7=onSnapshot(q7,s=>setSuiviRdvList(s.docs.map(d=>({id:d.id,...d.data()}))));
-    return()=>{u();u2();u3();u4();u5();u6();u7();};
+    return()=>{u();u2();u3();u4();u5();u6();};
   },[user.uid]);
-
-  // ─── POPUP anamnèse (1 seule fois) + rappel email suivi hebdo ──────────────
-  useEffect(()=>{
-    if(loading) return;
-    if(!hasAnamnese){
-      const key=`popup_anamnese_seen_${user.uid}`;
-      if(!localStorage.getItem(key)){
-        setShowAnamnesePopup(true);
-      }
-    }
-    const lastEntry=entries[entries.length-1];
-    const daysSince=lastEntry?Math.floor((Date.now()-new Date(lastEntry.date).getTime())/(1000*60*60*24)):99;
-    if(daysSince>=6){
-      const RAPPEL_KEY=`rappel_suivi_sent_${user.uid}_${new Date().toISOString().slice(0,10)}`;
-      if(!sessionStorage.getItem(RAPPEL_KEY)){
-        sessionStorage.setItem(RAPPEL_KEY,"1");
-        sendEmail(EMAILJS_TEMPLATE_RAPPEL_SUIVI,{prenom:user.prénom,to_email:user.email,lien:"https://meije-suivi.vercel.app"}).catch(()=>{});
-      }
-    }
-  },[loading,hasAnamnese,entries,user]);
 
   const uploadToCloudinaryClient=async(file,folder)=>{
     const fd=new FormData();fd.append("file",file);fd.append("upload_preset",UPLOAD_PRESET);fd.append("folder",folder);
@@ -997,12 +761,11 @@ function Cliente({ user, onLogout }) {
     showToast("Réponse enregistrée ✓");
   };
 
-  const lm = messages[messages.length - 1];
+  const lm=messages[messages.length-1];const hasAnamnese=anamneses.length>0;
   const profilsActifs = userProfil.profils || [];
 
   if(loading)return<div style={{minHeight:"100vh",background:P.cBg,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{fontFamily:P.serif,fontSize:18,color:P.cTextDim,fontWeight:300}}>Chargement…</p></div>;
   if(anamneseView)return<Anamnese user={user} onDone={()=>setAnamneseView(false)} readonly={false} existingData={anamneses[0]}/>;
-  if(suiviRdvView&&suiviRdvNum!==null)return<SuiviRdv user={user} numRdv={suiviRdvNum} existingData={suiviRdvList.find(s=>s.numRdv===suiviRdvNum)||null} onDone={()=>{setSuiviRdvView(false);setSuiviRdvNum(null);}} />;
 
   const pageStyle={minHeight:"100vh",background:P.cBg,paddingBottom:80,fontFamily:P.sans};
   const headerStyle={background:P.cSurface,borderBottom:`1px solid ${P.cBorder}`,padding:"16px 20px 14px",position:"sticky",top:0,zIndex:50};
@@ -1011,22 +774,6 @@ function Cliente({ user, onLogout }) {
   return (
     <div style={pageStyle}>
       {toast&&<Toast message={toast} onClose={()=>setToast("")}/>}
-      {showAnamnesePopup&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
-          <div style={{background:P.cSurface,borderRadius:20,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",border:`1px solid ${P.cBorder}`}}>
-            <p style={{fontSize:28,marginBottom:12,textAlign:"center"}}>📋</p>
-            <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,textAlign:"center",marginBottom:8}}>Action obligatoire</p>
-            <p style={{color:P.cTerra,fontSize:13,fontWeight:600,textAlign:"center",marginBottom:16,background:P.cTerraDim,borderRadius:10,padding:"10px 14px",border:`1px solid rgba(181,88,58,0.25)`}}>
-              ⚠️ Vous devez remplir votre questionnaire de santé <strong>au moins 72h avant notre rendez-vous</strong>, sans quoi le rendez-vous sera annulé.
-            </p>
-            <p style={{color:P.cTextMid,fontSize:13,lineHeight:1.7,marginBottom:20,textAlign:"center"}}>
-              Ce questionnaire permet à Meije de préparer votre consultation en profondeur et de construire un protocole vraiment adapté à votre situation.
-            </p>
-            <Btn variant="cPrimary" onClick={()=>{const key=`popup_anamnese_seen_${user.uid}`;localStorage.setItem(key,"1");setShowAnamnesePopup(false);setAnamneseView(true);}} style={{width:"100%",marginBottom:10}}>Remplir maintenant →</Btn>
-            <Btn variant="ghost" theme="c" onClick={()=>{const key=`popup_anamnese_seen_${user.uid}`;localStorage.setItem(key,"1");setShowAnamnesePopup(false);}} style={{width:"100%",fontSize:12}}>Je le ferai plus tard</Btn>
-          </div>
-        </div>
-      )}
       <div style={headerStyle}>
         <div style={{maxWidth:600,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
@@ -1076,25 +823,7 @@ function Cliente({ user, onLogout }) {
             })}
           </div>
           {clientFolder==="protocole"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">{protocoles.length===0?<p style={{color:P.cTextDim,fontSize:13,textAlign:"center"}}>Ton protocole arrive bientôt 🌿</p>:protocoles.map((p,i)=>(<div key={i} style={{marginBottom:i<protocoles.length-1?20:0}}><p style={{fontFamily:P.serif,fontSize:18,color:P.cText,marginBottom:8}}>{p.titre}</p><p style={{color:P.cTextMid,fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{p.contenu}</p>{p.fichiers?.map((f,j)=><a key={j} href={f.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:10,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"6px 12px",color:P.cGreen,fontSize:12,textDecoration:"none"}}>📄 {f.name}</a>)}</div>))}</div>)}
-          {clientFolder==="suivi"&&(
-            <div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">
-              <Btn variant="cPrimary" onClick={()=>setView("suivi")} style={{width:"100%",marginBottom:12}}>Remplir mon suivi hebdomadaire →</Btn>
-              {entries.length>0&&<Btn variant="ghost" theme="c" onClick={()=>setView("historique")} style={{width:"100%",marginBottom:12}}>Voir mon historique</Btn>}
-              <div style={{borderTop:`1px solid ${P.cBorder}`,paddingTop:14,marginTop:4}}>
-                <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:10}}>Questionnaires de suivi RDV</p>
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                  {[1,2,3,4,5,6].map(n=>{
-                    const done=suiviRdvList.some(s=>s.numRdv===n);
-                    return(
-                      <button key={n} onClick={()=>{setSuiviRdvNum(n);setSuiviRdvView(true);}} style={{padding:"10px 16px",borderRadius:20,border:`1.5px solid ${done?P.cGreenBorder:P.cBorder}`,background:done?P.cGreenDim:"transparent",color:done?P.cGreen:P.cTextMid,fontFamily:P.sans,fontSize:13,fontWeight:done?500:400,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
-                        {done?"✓ ":""}{`Consultation ${n}`}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
+          {clientFolder==="suivi"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("suivi")} style={{width:"100%",marginBottom:12}}>Remplir mon suivi de la semaine →</Btn>{entries.length>0&&<Btn variant="ghost" theme="c" onClick={()=>setView("historique")} style={{width:"100%"}}>Voir mon historique</Btn>}</div>)}
           {clientFolder==="documents"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("docs")} style={{width:"100%"}}>Gérer mes documents →</Btn></div>)}
           {clientFolder==="questionnaire"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setAnamneseView(true)} style={{width:"100%"}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</Btn></div>)}
           {clientFolder==="evolution"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("evolution")} style={{width:"100%"}}>Voir mon évolution →</Btn></div>)}
@@ -1288,64 +1017,6 @@ const PRAT_NAV = [
   { key:"profil", label:"Mon espace", icon:"🌿" },
 ];
 
-// ─── PDF SUIVI RDV ────────────────────────────────────────────────────────────
-const downloadSuiviRdvPDF = (rdv, prenom) => {
-  const date = new Date(rdv.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-  const rows = [
-    ["Problématique principale", rdv.problematique],
-    ["Évolution depuis la dernière consultation", rdv.evolution],
-    ["Sommeil", rdv.sommeil],
-    ["Digestion", rdv.digestion],
-    ["Cycle", rdv.cycle],
-    ["Anxiété / Stress", rdv.anxiete],
-    ["Thyroïde", rdv.thyroide],
-    ["Compléments pris", rdv.complements],
-    ["Difficultés rencontrées", rdv.difficultes],
-    ["Ce qui a changé positivement", rdv.positif],
-    ["Commentaire pour Meije", rdv.commentaire],
-  ].filter(([_, v]) => v && v.trim());
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Suivi RDV ${rdv.numRdv} — ${prenom}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; color: #1C1008; background: #fff; padding: 40px 48px; font-size: 12px; line-height: 1.7; }
-  .header { border-bottom: 2px solid #B5583A; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
-  .header h1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #B5583A; font-weight: 600; }
-  .header .meta { font-size: 11px; color: rgba(28,16,8,0.5); text-align: right; }
-  .row { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid rgba(28,16,8,0.08); }
-  .label { font-size: 11px; color: rgba(28,16,8,0.5); min-width: 220px; flex-shrink: 0; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
-  .val { font-size: 13px; color: #1C1008; line-height: 1.7; white-space: pre-wrap; }
-  @media print { body { padding: 20px 24px; } @page { margin: 1.5cm; size: A4; } }
-</style>
-</head>
-<body>
-<div class="header">
-  <div>
-    <h1>Questionnaire de suivi — Consultation ${rdv.numRdv}</h1>
-    <p style="font-size:13px;color:rgba(28,16,8,0.6);margin-top:4px;">${prenom}</p>
-  </div>
-  <div class="meta">
-    <p>Meije Delmonte — Naturopathe fonctionnelle</p>
-    <p>Rempli le ${date}</p>
-  </div>
-</div>
-${rows.map(([label, val]) => `<div class="row"><span class="label">${label}</span><span class="val">${String(val).replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span></div>`).join("")}
-</body>
-</html>`;
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `suivi_rdv${rdv.numRdv}_${(prenom||"cliente").toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.html`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
-};
-
 function Praticienne({ user, onLogout }) {
   const [clients,setClients]=useState([]);const [recherche,setRecherche]=useState("");
   const [selected,setSelected]=useState(null);const [clientData,setClientData]=useState(null);
@@ -1359,6 +1030,7 @@ function Praticienne({ user, onLogout }) {
   const [activeTab,setActiveTab]=useState(null);const [editInfos,setEditInfos]=useState(false);
   const [infosForm,setInfosForm]=useState({});const [savingInfos,setSavingInfos]=useState(false);
   const [mainView,setMainView]=useState("profil");
+  const [showNotifPanel,setShowNotifPanel]=useState(false);const [seenCount,setSeenCount]=useState(0);
   const [newProtocole,setNewProtocole]=useState({titre:"",contenu:""});
   const [sendingProtocole,setSendingProtocole]=useState(false);
   const [newComplement,setNewComplement]=useState({nom:"",lien:"",posologie:"",codePromo:""});
@@ -1383,7 +1055,6 @@ function Praticienne({ user, onLogout }) {
   const [iaStep,setIaStep]=useState("");
   const [iaError,setIaError]=useState("");
   const [clearedActivity,setClearedActivity]=useState([]);
-  const [suivisRdvClient,setSuivisRdvClient]=useState([]);
   // Nouveau : réponse praticienne sur suivi
   const [reponseEnCours,setReponseEnCours]=useState({});
   const [savingReponse,setSavingReponse]=useState({});
@@ -1408,14 +1079,12 @@ function Praticienne({ user, onLogout }) {
     return()=>{u();um();ua();uan();udoc();};
   },[]);
 
-  const clientsActifs=clients.filter(c=>c.statut!=="pending");
-  const clientsPending=clients.filter(c=>c.statut==="pending");
-  const clientsFiltres=clientsActifs.filter(c=>(c.prenom||"").toLowerCase().includes(recherche.toLowerCase())||(c.email||"").toLowerCase().includes(recherche.toLowerCase()));
+  const clientsFiltres=clients.filter(c=>(c.prenom||"").toLowerCase().includes(recherche.toLowerCase())||(c.email||"").toLowerCase().includes(recherche.toLowerCase()));
 
   const select=useCallback(c=>{
     if(window._clientUnsubs)window._clientUnsubs.forEach(fn=>fn());
     setSelected(c);setNewMsg("");setActiveTab(null);setAnamneseMode("view");setIaError("");setIaStep("");
-    setClientData(null);setEntries([]);setMessages([]);setAnamneses([]);setProtocoles([]);setDocuments([]);setNoteHistory([]);setSuivisRdvClient([]);
+    setClientData(null);setEntries([]);setMessages([]);setAnamneses([]);setProtocoles([]);setDocuments([]);setNoteHistory([]);
     setNewProtocole({titre:getDefaultTitre(c.prenom,0),contenu:getDefaultMessage(c.prenom)});
     const userRef=doc(db,"users",c.uid);
     const u0=onSnapshot(userRef,d=>setClientData(d.data()));
@@ -1431,10 +1100,7 @@ function Praticienne({ user, onLogout }) {
     const u5=onSnapshot(q5,s=>setDocuments(s.docs.map(d=>({id:d.id,...d.data()}))||[]));
     let u6=()=>{};
     try{const q6=query(collection(db,"notes_privees"),where("clientUid","==",c.uid),orderBy("date","desc"));u6=onSnapshot(q6,s=>setNoteHistory(s.docs.map(d=>({id:d.id,...d.data()}))||[]),()=>setNoteHistory([]));}catch{setNoteHistory([]);}
-    setSuivisRdvClient([]);
-    const q8=query(collection(db,"suivis_rdv"),where("userUid","==",c.uid),orderBy("date","asc"));
-    const u8=onSnapshot(q8,s=>setSuivisRdvClient(s.docs.map(d=>({id:d.id,...d.data()}))||[]),()=>setSuivisRdvClient([]));
-    window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6,u8];
+    window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6];
     setPrivateNotes("");setMainView("fiche");
   },[]);
 
@@ -1443,11 +1109,6 @@ function Praticienne({ user, onLogout }) {
   const saveNote=async()=>{if(!privateNotes.trim())return;setSavingNote(true);await addDoc(collection(db,"notes_privees"),{clientUid:selected.uid,clientPrenom:selected.prenom,text:privateNotes.trim(),date:new Date().toISOString()});setPrivateNotes("");setSavingNote(false);showToast("Note enregistrée ✓");};
   const deleteNote=async(id)=>{await deleteDoc(doc(db,"notes_privees",id));};
   const saveStatut=async(uid,statut)=>{await updateDoc(doc(db,"users",uid),{statut});};
-  const deleteClient=async(c)=>{
-    if(!window.confirm(`Supprimer le compte de ${c.prenom} ? Cette action supprime son dossier Firestore. Son compte Firebase Auth restera inactif.`))return;
-    await deleteDoc(doc(db,"users",c.uid));
-    showToast(`Compte de ${c.prenom} supprimé ✓`);
-  };
 
   // Répondre à un commentaire cliente sur un suivi
   const envoyerReponse=async(entryId)=>{
@@ -1483,11 +1144,12 @@ function Praticienne({ user, onLogout }) {
   const uploadProtocoleFiles=async(files)=>{setUploadingProtocole(true);const uploaded=[];for(const file of files){try{const r=await uploadToCloudinary(file,"meije-naturo/protocoles");uploaded.push(r);}catch(e){showToast("Erreur : "+e.message);}}setProtocoleFiles(prev=>[...prev,...uploaded]);setUploadingProtocole(false);};
   const uploadAnamnesePDF=async(files)=>{setUploadingAnamnese(true);const uploaded=[];for(const file of files){try{const r=await uploadToCloudinary(file,"meije-naturo/anamneses");uploaded.push(r);}catch(e){showToast("Erreur : "+e.message);}}setUploadedAnamnese(prev=>[...prev,...uploaded]);setUploadingAnamnese(false);};
   const saveAnamnesePDF=async()=>{if(!uploadedAnamnese.length)return;setSavingAnamnese(true);await addDoc(collection(db,"anamneses"),{userUid:selected.uid,userEmail:selected.email,userPrenom:selected.prenom,date:new Date().toISOString(),saisieParPraticienne:true,bilans:uploadedAnamnese});setUploadedAnamnese([]);setSavingAnamnese(false);setAnamneseMode("view");showToast("Document enregistré ✓");};
-  const sendProtocole=async()=>{if(!newProtocole.titre.trim())return;setSendingProtocole(true);await addDoc(collection(db,"protocoles"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,titre:newProtocole.titre.trim(),contenu:newProtocole.contenu.trim(),fichiers:protocoleFiles,date:new Date().toISOString()});setNewProtocole({titre:"",contenu:""});setProtocoleFiles([]);setSendingProtocole(false);showToast("Protocole envoyé à "+selected.prenom+" ✓");};
-  const sendMsg=async()=>{if(!newMsg.trim())return;setSending(true);await addDoc(collection(db,"messages"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,text:newMsg.trim(),date:new Date().toISOString()});setNewMsg("");setSending(false);showToast("Message envoyé ✓");};
+  const sendProtocole=async()=>{if(!newProtocole.titre.trim())return;setSendingProtocole(true);await addDoc(collection(db,"protocoles"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,titre:newProtocole.titre.trim(),contenu:newProtocole.contenu.trim(),fichiers:protocoleFiles,date:new Date().toISOString()});try{await sendEmail(EMAILJS_TEMPLATE,{prenom:selected.prenom,to_email:selected.email,titre:newProtocole.titre.trim()});}catch{}setNewProtocole({titre:"",contenu:""});setProtocoleFiles([]);setSendingProtocole(false);showToast("Protocole envoyé à "+selected.prenom+" ✓");};
+  const sendMsg=async()=>{if(!newMsg.trim())return;setSending(true);await addDoc(collection(db,"messages"),{toUid:selected.uid,toEmail:selected.email,toPrenom:selected.prenom,text:newMsg.trim(),date:new Date().toISOString()});try{await sendEmail(EMAILJS_TEMPLATE,{prenom:selected.prenom,to_email:selected.email});}catch{}setNewMsg("");setSending(false);showToast("Message envoyé ✓");};
   const deleteProtocole=async(id)=>{if(!window.confirm("Supprimer ce protocole ?"))return;await deleteDoc(doc(db,"protocoles",id));showToast("Protocole supprimé");};
 
   const visibleActivity = recentActivity.filter(a => !clearedActivity.includes(a.id));
+  const unreadCount = visibleActivity.length > seenCount ? visibleActivity.length - seenCount : 0;
 
   if(loading)return<div style={{minHeight:"100vh",background:P.pBg,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{fontFamily:P.serif,fontSize:20,color:P.pTextDim,fontWeight:300}}>Chargement…</p></div>;
 
@@ -1505,7 +1167,37 @@ function Praticienne({ user, onLogout }) {
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
             {selected&&mainView==="fiche"&&<button onClick={()=>{setSelected(null);setMainView("clients");}} style={{background:P.pSurface2,border:`1px solid ${P.pBorder}`,borderRadius:20,padding:"7px 14px",color:P.pTextMid,fontSize:12,fontFamily:P.sans,cursor:"pointer"}}>← Retour</button>}
-
+            <div style={{position:"relative"}}>
+              <button onClick={()=>{setSeenCount(visibleActivity.length);setShowNotifPanel(p=>!p)}} style={{background:P.pSurface2,border:`1px solid ${P.pBorder}`,borderRadius:20,padding:"7px 14px",color:P.pTextMid,fontSize:15,fontFamily:P.sans,cursor:"pointer",display:"flex",alignItems:"center",gap:6}}>
+                🔔{unreadCount>0&&<span style={{background:P.pAccent,color:"#1C1410",borderRadius:20,padding:"1px 7px",fontSize:10,fontWeight:700}}>{unreadCount}</span>}
+              </button>
+              {showNotifPanel&&(
+                <div style={{position:"absolute",top:44,right:0,width:290,background:"#2A1E14",border:`1px solid ${P.pBorder}`,borderRadius:16,padding:16,zIndex:200,boxShadow:"0 8px 32px rgba(0,0,0,0.3)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <p style={{fontFamily:P.serif,fontSize:15,color:P.pText}}>Activité récente</p>
+                    {visibleActivity.length>0&&<button onClick={()=>{setClearedActivity(recentActivity.map(a=>a.id));setSeenCount(0);}} style={{background:"none",border:"none",color:P.pTextDim,fontSize:11,fontFamily:P.sans,cursor:"pointer",textDecoration:"underline"}}>Tout effacer</button>}
+                  </div>
+                  {visibleActivity.length===0?<p style={{color:P.pTextDim,fontSize:13}}>Aucune activité 🌿</p>
+                    :visibleActivity.slice(0,8).map((a,i)=>{
+                      const prenom=a.userPrénom||a.userPrenom||a.clientPrenom||"—";
+                      const icons={suivi:"📝",anamnese:"📋",document:"📁"};
+                      const labels={suivi:"a rempli son suivi",anamnese:"a envoyé son questionnaire",document:"a partagé des documents"};
+                      const daysAgo=Math.floor((Date.now()-new Date(a.date).getTime())/(1000*60*60*24));
+                      const timeLabel=daysAgo===0?"Aujourd'hui":daysAgo===1?"Hier":`Il y a ${daysAgo}j`;
+                      const clientCible=clients.find(c=>c.uid===(a.userUid||a.clientUid));
+                      return(
+                        <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:6,background:"rgba(255,255,255,0.04)"}}>
+                          <div style={{flex:1,cursor:clientCible?"pointer":"default"}} onClick={()=>{if(clientCible){setSelected(clientCible);setMainView("fiche");setShowNotifPanel(false);}}}>
+                            <p style={{fontSize:12,color:"rgba(242,232,218,0.8)"}}>{icons[a.type]} <span style={{color:P.pAccent}}>{prenom}</span> {labels[a.type]}</p>
+                            <p style={{fontSize:10,color:"rgba(242,232,218,0.3)",marginTop:2}}>{timeLabel}</p>
+                          </div>
+                          <button onClick={()=>setClearedActivity(prev=>[...prev,a.id])} style={{background:"none",border:"none",color:P.pTextDim,fontSize:16,cursor:"pointer",lineHeight:1,flexShrink:0,padding:"0 2px"}}>×</button>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
             <button onClick={onLogout} style={{background:"none",border:"none",color:P.pTextDim,fontSize:12,fontFamily:P.sans,cursor:"pointer"}}>Déconnexion</button>
           </div>
         </div>
@@ -1530,31 +1222,7 @@ function Praticienne({ user, onLogout }) {
               <Btn onClick={createClient} disabled={creatingClient} variant="primary">{creatingClient?"Création…":"Créer son espace"}</Btn>
             </div>
           )}
-          {clientsPending.length>0&&(
-            <div style={{marginBottom:20}}>
-              <p style={{color:"#C8A84B",fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:10}}>⏳ En attente ({clientsPending.length})</p>
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {clientsPending.map(c=>(
-                  <div key={c.uid} style={{background:"rgba(200,168,75,0.06)",border:`1px solid rgba(200,168,75,0.25)`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:12}}>
-                      <div style={{width:36,height:36,borderRadius:"50%",background:"rgba(200,168,75,0.12)",border:`1px solid rgba(200,168,75,0.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:P.serif,fontSize:16,color:"#C8A84B",flexShrink:0}}>{(c.prenom||"?")[0].toUpperCase()}</div>
-                      <div>
-                        <p style={{color:P.pText,fontSize:14,fontWeight:500}}>{c.prenom}</p>
-                        <p style={{color:P.pTextDim,fontSize:12,marginTop:1}}>{c.email}</p>
-                        <span style={{fontSize:10,color:"#C8A84B",background:"rgba(200,168,75,0.1)",border:"0.5px solid rgba(200,168,75,0.3)",borderRadius:20,padding:"1px 7px"}}>Compte créé — en attente</span>
-                      </div>
-                    </div>
-                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                      <button onClick={()=>saveStatut(c.uid,"en cours")} style={{background:P.pGreen+"18",border:`0.5px solid ${P.pGreen}44`,color:P.pGreen,borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:P.sans,cursor:"pointer"}}>✓ Activer</button>
-                      <button onClick={()=>deleteClient(c)} style={{background:"rgba(181,88,58,0.1)",border:"0.5px solid rgba(181,88,58,0.3)",color:"#B5583A",borderRadius:8,padding:"6px 10px",fontSize:13,fontFamily:P.sans,cursor:"pointer"}}>🗑</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{height:1,background:P.pBorder,margin:"16px 0"}}/>
-            </div>
-          )}
-          <p style={{color:P.pTextDim,fontSize:12,marginBottom:12}}>{clientsActifs.length} consultante{clientsActifs.length>1?"s":""}</p>
+          <p style={{color:P.pTextDim,fontSize:12,marginBottom:12}}>{clients.length} consultante{clients.length>1?"s":""}</p>
           {!recherche&&clients.length>5&&(
             <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14}}>
               {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(l=>{const has=clients.some(c=>(c.prenom||"").toUpperCase().startsWith(l));return has?<button key={l} onClick={()=>setRecherche(l)} style={{width:26,height:26,borderRadius:6,border:`1px solid ${P.pAccentBorder}`,background:P.pAccentDim,color:P.pAccent,fontSize:11,fontFamily:P.sans,fontWeight:500}}>{l}</button>:null;})}
@@ -1644,26 +1312,7 @@ function Praticienne({ user, onLogout }) {
               const daysAgo=Math.floor((Date.now()-new Date(a.date).getTime())/(1000*60*60*24));
               const timeLabel=daysAgo===0?"Aujourd'hui":daysAgo===1?"Hier":`Il y a ${daysAgo} j`;
               const clientCible=clients.find(c=>c.uid===(a.userUid||a.clientUid)||c.email===a.userEmail);
-              return(
-                <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,background:P.pSurface,borderRadius:10,border:`0.5px solid ${P.pBorder}`,padding:"10px 14px",marginBottom:8}} className="card-raised-dark">
-                  <span style={{fontSize:16}}>{icons[a.type]}</span>
-                  <div style={{flex:1,cursor:clientCible?"pointer":"default"}} onClick={()=>{if(clientCible){setSelected(clientCible);select(clientCible);}}}>
-                    <p style={{color:P.pText,fontSize:13}}><span style={{color:colors[a.type],fontWeight:500}}>{prenom}</span> {labels[a.type]}</p>
-                    {a.weekLabel&&<p style={{color:P.pTextDim,fontSize:11,marginTop:2}}>{a.weekLabel}</p>}
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                    <p style={{color:P.pTextDim,fontSize:11}}>{timeLabel}</p>
-                    {a.type==="anamnese"&&clientCible&&(()=>{
-                      const anamClientData=a;
-                      return(
-                        <button onClick={async(e)=>{e.stopPropagation();try{const q=query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid),orderBy("date","desc"));const{getDocs}=await import("firebase/firestore");const snap=await getDocs(q);if(!snap.empty){const an={id:snap.docs[0].id,...snap.docs[0].data()};downloadAnamnesePDF(an,prenom);}}catch(err){showToast("Erreur téléchargement");} }} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
-                          ⬇ PDF
-                        </button>
-                      );
-                    })()}
-                  </div>
-                </div>
-              );
+              return<div key={a.id} onClick={()=>{if(clientCible){setSelected(clientCible);select(clientCible);}}} style={{display:"flex",alignItems:"center",gap:12,background:P.pSurface,borderRadius:10,border:`0.5px solid ${P.pBorder}`,padding:"10px 14px",marginBottom:8,cursor:clientCible?"pointer":"default"}} className="card-raised-dark"><span style={{fontSize:16}}>{icons[a.type]}</span><div style={{flex:1}}><p style={{color:P.pText,fontSize:13}}><span style={{color:colors[a.type],fontWeight:500}}>{prenom}</span> {labels[a.type]}</p>{a.weekLabel&&<p style={{color:P.pTextDim,fontSize:11,marginTop:2}}>{a.weekLabel}</p>}</div><p style={{color:P.pTextDim,fontSize:11,flexShrink:0}}>{timeLabel}</p></div>;
             })}
           <div style={{marginTop:24,paddingTop:20,borderTop:`1px solid ${P.pBorder}`}}><Btn onClick={onLogout} variant="ghost" theme="p" style={{width:"100%"}}>Se déconnecter</Btn></div>
         </div>
@@ -1694,7 +1343,6 @@ function Praticienne({ user, onLogout }) {
               {key:"suivis",icon:"📊",label:"Suivis"},
               {key:"message",icon:"💬",label:"Messages"},
               {key:"notes",icon:"🔒",label:"Notes"},
-              {key:"suivirdv",icon:"📅",label:"Suivis RDV"},
             ].map(({key,icon,label})=>{
               const isActive=activeTab===key||(key==="documents"&&["anamnese","protocole","complements"].includes(activeTab));
               return(
@@ -1969,48 +1617,6 @@ function Praticienne({ user, onLogout }) {
                 <textarea value={protoPrat} onChange={e=>setProtoPrat(e.target.value)} placeholder={`Données techniques pour ${selected.prenom}…`} rows={8} style={{...iP("p"),resize:"vertical",marginBottom:10}}/>
                 <Btn onClick={saveProtoPrat} disabled={savingProtoPrat||!protoPrat.trim()} variant="primary">{savingProtoPrat?"Enregistrement…":"Enregistrer le protocole praticienne"}</Btn>
               </div>
-            </div>
-          )}
-
-          {/* ── ONGLET SUIVIS RDV PRATICIENNE ── */}
-          {activeTab==="suivirdv"&&(
-            <div>
-              <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:14}}>Questionnaires de suivi par consultation</p>
-              {[1,2,3,4,5,6].map(n=>{
-                const rdv=suivisRdvClient?.find(s=>s.numRdv===n);
-                return(
-                  <div key={n} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${rdv?P.pGreen+"44":P.pBorder}`,padding:"16px 18px",marginBottom:10}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:rdv?12:0}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <span style={{fontSize:16}}>{rdv?"✅":"⬜"}</span>
-                        <p style={{color:rdv?P.pText:P.pTextDim,fontWeight:rdv?500:400,fontSize:14}}>Consultation {n}</p>
-                      </div>
-                      {rdv&&(
-                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                          <p style={{color:P.pTextDim,fontSize:11}}>{new Date(rdv.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
-                          <button onClick={()=>downloadSuiviRdvPDF(rdv,selected.prenom)} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer"}}>⬇ PDF</button>
-                        </div>
-                      )}
-                    </div>
-                    {rdv&&(
-                      <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                        {[
-                          ["Problématique",rdv.problematique],["Évolution depuis dernière consult",rdv.evolution],
-                          ["Sommeil",rdv.sommeil],["Digestion",rdv.digestion],["Cycle",rdv.cycle],
-                          ["Anxiété / Stress",rdv.anxiete],["Thyroïde",rdv.thyroide],
-                          ["Compléments pris",rdv.complements],["Difficultés",rdv.difficultes],
-                          ["Ce qui a changé positivement",rdv.positif],["Commentaire pour Meije",rdv.commentaire],
-                        ].filter(([_,v])=>v&&v.trim()).map(([label,val])=>(
-                          <div key={label} style={{display:"flex",gap:10,background:P.pSurface2,borderRadius:8,padding:"8px 12px"}}>
-                            <span style={{color:P.pTextDim,fontSize:12,minWidth:200,flexShrink:0}}>{label}</span>
-                            <span style={{color:P.pTextMid,fontSize:13,lineHeight:1.5}}>{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           )}
 
