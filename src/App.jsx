@@ -997,7 +997,7 @@ function Cliente({ user, onLogout }) {
     showToast("Réponse enregistrée ✓");
   };
 
-  const lm=messages[messages.length-1];const hasAnamnese=anamneses.length>0;
+  const lm = messages[messages.length - 1];
   const profilsActifs = userProfil.profils || [];
 
   if(loading)return<div style={{minHeight:"100vh",background:P.cBg,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{fontFamily:P.serif,fontSize:18,color:P.cTextDim,fontWeight:300}}>Chargement…</p></div>;
