@@ -544,7 +544,7 @@ function Auth({ onLogin, onBack }) {
     setError(""); setLoading(true);
     try {
       const c = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, "users", c.user.uid), { prenom:prenom.trim(), email:email.trim(), role:"cliente", statut:"pending", createdAt:new Date().toISOString(), complements:[], rappelsActifs:true });
+      await setDoc(doc(db, "users", c.user.uid), { prenom:prenom.trim(), email:email.trim(), role:"cliente", statut:"en cours", createdAt:new Date().toISOString(), complements:[], rappelsActifs:true });
       await signOut(auth);
       setRegisterOk(true);
     } catch(e) {
@@ -1009,7 +1009,7 @@ function Cliente({ user, onLogout }) {
         sendEmail(EMAILJS_TEMPLATE_RAPPEL_SUIVI,{prenom:user.prénom,to_email:user.email,lien:"https://meije-suivi.vercel.app"}).catch(()=>{});
       }
     }
-  },[loading,hasAnamnese,entries,user]);
+  },[loading,hasAnamnese,entries,user.uid]);
 
   const uploadToCloudinaryClient=async(file,folder)=>{
     const fd=new FormData();fd.append("file",file);fd.append("upload_preset",UPLOAD_PRESET);fd.append("folder",folder);
@@ -1411,8 +1411,7 @@ function Praticienne({ user, onLogout }) {
     return()=>{u();um();ua();uan();udoc();};
   },[]);
 
-  const clientsActifs=clients.filter(c=>c.statut!=="pending");
-  const clientsPending=clients.filter(c=>c.statut==="pending");
+  const clientsActifs=clients;
   const clientsFiltres=clientsActifs.filter(c=>(c.prenom||"").toLowerCase().includes(recherche.toLowerCase())||(c.email||"").toLowerCase().includes(recherche.toLowerCase()));
 
   const select=useCallback(c=>{
@@ -1533,30 +1532,6 @@ function Praticienne({ user, onLogout }) {
               <Btn onClick={createClient} disabled={creatingClient} variant="primary">{creatingClient?"Création…":"Créer son espace"}</Btn>
             </div>
           )}
-          {clientsPending.length>0&&(
-            <div style={{marginBottom:20}}>
-              <p style={{color:"#C8A84B",fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:10}}>⏳ En attente ({clientsPending.length})</p>
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {clientsPending.map(c=>(
-                  <div key={c.uid} style={{background:"rgba(200,168,75,0.06)",border:`1px solid rgba(200,168,75,0.25)`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:12}}>
-                      <div style={{width:36,height:36,borderRadius:"50%",background:"rgba(200,168,75,0.12)",border:`1px solid rgba(200,168,75,0.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:P.serif,fontSize:16,color:"#C8A84B",flexShrink:0}}>{(c.prenom||"?")[0].toUpperCase()}</div>
-                      <div>
-                        <p style={{color:P.pText,fontSize:14,fontWeight:500}}>{c.prenom}</p>
-                        <p style={{color:P.pTextDim,fontSize:12,marginTop:1}}>{c.email}</p>
-                        <span style={{fontSize:10,color:"#C8A84B",background:"rgba(200,168,75,0.1)",border:"0.5px solid rgba(200,168,75,0.3)",borderRadius:20,padding:"1px 7px"}}>Compte créé — en attente</span>
-                      </div>
-                    </div>
-                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                      <button onClick={()=>saveStatut(c.uid,"en cours")} style={{background:P.pGreen+"18",border:`0.5px solid ${P.pGreen}44`,color:P.pGreen,borderRadius:8,padding:"6px 10px",fontSize:11,fontFamily:P.sans,cursor:"pointer"}}>✓ Activer</button>
-                      <button onClick={()=>deleteClient(c)} style={{background:"rgba(181,88,58,0.1)",border:"0.5px solid rgba(181,88,58,0.3)",color:"#B5583A",borderRadius:8,padding:"6px 10px",fontSize:13,fontFamily:P.sans,cursor:"pointer"}}>🗑</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{height:1,background:P.pBorder,margin:"16px 0"}}/>
-            </div>
-          )}
           <p style={{color:P.pTextDim,fontSize:12,marginBottom:12}}>{clientsActifs.length} consultante{clientsActifs.length>1?"s":""}</p>
           {!recherche&&clients.length>5&&(
             <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14}}>
@@ -1573,6 +1548,7 @@ function Praticienne({ user, onLogout }) {
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   {(()=>{const s=c.statut||"en cours";const cols={"en cours":P.pGreen,"en pause":"#B8A05A","terminé":P.pTextDim};return<span style={{fontSize:10,color:cols[s],background:cols[s]+"18",border:`0.5px solid ${cols[s]}44`,borderRadius:20,padding:"2px 8px",whiteSpace:"nowrap"}}>{s}</span>;})()}
                   <span style={{color:P.pTextDim,fontSize:18}}>›</span>
+                  <button onClick={e=>{e.stopPropagation();deleteClient(c);}} style={{background:"none",border:"none",color:"rgba(181,88,58,0.5)",fontSize:18,cursor:"pointer",padding:"0 4px",lineHeight:1}}>×</button>
                 </div>
               </button>
             ))}
