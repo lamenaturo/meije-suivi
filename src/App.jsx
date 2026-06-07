@@ -489,7 +489,7 @@ function LandingPage({ onEnter }) {
       <div style={{ maxWidth:680, margin:"0 auto", padding:"32px 20px 0" }}>
         <div style={{ background:P.pAccentDim, border:`1px solid ${P.pAccentBorder}`, borderRadius:16, padding:"20px 24px", textAlign:"center" }}>
           <p style={{ color:P.pAccent, fontSize:13, fontWeight:500, marginBottom:6 }}>Tu n'as pas encore de compte ?</p>
-          <p style={{ color:P.pTextDim, fontSize:13, lineHeight:1.6, marginBottom:12 }}>L'accès à cet espace est créé par Meije après confirmation de ton RDV.</p>
+          <p style={{ color:P.pTextDim, fontSize:13, lineHeight:1.6, marginBottom:12 }}>Cet espace est réservé aux personnes accompagnées par Meije. Tu as réservé ta consultation ? Crée ton compte et tu seras prête pour notre premier rendez-vous.</p>
           <a href="https://meijenaturo.fr" target="_blank" rel="noreferrer" style={{ color:P.pAccent, fontSize:13, textDecoration:"none", fontWeight:500 }}>Prendre rendez-vous → meijenaturo.fr</a>
         </div>
       </div>
@@ -988,6 +988,9 @@ function Cliente({ user, onLogout }) {
     return()=>{u();u2();u3();u4();u5();u6();u7();};
   },[user.uid]);
 
+  const lm=messages[messages.length-1];const hasAnamnese=anamneses.length>0;
+  const profilsActifs = userProfil.profils || [];
+
   // ─── POPUP anamnèse (1 seule fois) + rappel email suivi hebdo ──────────────
   useEffect(()=>{
     if(loading) return;
@@ -1056,8 +1059,6 @@ function Cliente({ user, onLogout }) {
     showToast("Réponse enregistrée ✓");
   };
 
-  const lm=messages[messages.length-1];const hasAnamnese=anamneses.length>0;
-  const profilsActifs = userProfil.profils || [];
 
   if(loading)return<div style={{minHeight:"100vh",background:P.cBg,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{fontFamily:P.serif,fontSize:18,color:P.cTextDim,fontWeight:300}}>Chargement…</p></div>;
   if(anamneseView)return<Anamnese user={user} onDone={()=>setAnamneseView(false)} readonly={false} existingData={anamneses[0]}/>;
