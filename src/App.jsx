@@ -208,48 +208,165 @@ const P = {
 const CHART_JS_CDN = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js";
 
 // ─── PDF ANAMNÈSE — téléchargement direct (plus de window.print) ──────────────
-const downloadAnamnesePDF = (anamnese, prenom) => {
-  const text = anamnese.pdfText || "";
-  const date = new Date(anamnese.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Anamnèse — ${prenom}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; color: #1C1008; background: #fff; padding: 40px 48px; font-size: 12px; line-height: 1.7; }
-  .header { border-bottom: 2px solid #B5583A; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
-  .header h1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #B5583A; font-weight: 600; }
-  .header .meta { font-size: 11px; color: rgba(28,16,8,0.5); text-align: right; }
-  pre { white-space: pre-wrap; font-family: 'DM Sans', sans-serif; font-size: 12px; line-height: 1.8; color: #1C1008; }
-  @media print { body { padding: 20px 24px; } @page { margin: 1.5cm; size: A4; } }
-</style>
-</head>
-<body>
-<div class="header">
-  <div>
-    <h1>Questionnaire de santé</h1>
-    <p style="font-size:13px;color:rgba(28,16,8,0.6);margin-top:4px;">${prenom}</p>
-  </div>
-  <div class="meta">
-    <p>Meije Delmonte — Naturopathe fonctionnelle</p>
-    <p>Rempli le ${date}</p>
-  </div>
-</div>
-<pre>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
-</body>
-</html>`;
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `anamnese_${(prenom || "cliente").toLowerCase().replace(/\s+/g, "_")}_${new Date().toISOString().slice(0,10)}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+const downloadAnamnesePDF = async (anamnese, prenom) => {
+  let jsPDF;
+  try { const mod = await import("jspdf"); jsPDF = mod.jsPDF || mod.default; }
+  catch { alert("Impossible de générer le PDF. Vérifiez que jsPDF est installé."); return; }
+  const form = anamnese.form || {};
+  const bilans = anamnese.bilans || [];
+  const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const marginL = 18, marginR = 18, pageW = 210, pageH = 297, bottomMargin = 16;
+  const contentW = pageW - marginL - marginR;
+  let y = 0;
+  const newPage = () => {
+    pdf.addPage(); y = 18;
+    pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
+    pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
+    pdf.text(`${pdf.internal.getNumberOfPages()}`, pageW - marginR, pageH - 8, { align: "right" });
+    pdf.setTextColor(40, 25, 12);
+  };
+  const checkY = (needed = 10) => { if (y + needed > pageH - bottomMargin) newPage(); };
+  const addSection = (title) => {
+    checkY(14); y += 3;
+    pdf.setFillColor(181, 88, 58); pdf.setDrawColor(181, 88, 58); pdf.setLineWidth(0.3);
+    pdf.rect(marginL - 2, y - 5, contentW + 4, 8, "F");
+    pdf.setFontSize(10); pdf.setFont("helvetica", "bold"); pdf.setTextColor(255, 255, 255);
+    pdf.text(title.toUpperCase(), marginL, y); pdf.setTextColor(40, 25, 12); y += 7;
+  };
+  const addRow = (label, value) => {
+    if (!value || value === "—") return;
+    checkY(8); pdf.setFontSize(9.5); pdf.setFont("helvetica", "bold"); pdf.setTextColor(100, 70, 40);
+    pdf.text(label + " :", marginL, y); pdf.setFont("helvetica", "normal"); pdf.setTextColor(40, 25, 12);
+    const labelW = pdf.getTextWidth(label + " : ") + 1;
+    const valLines = pdf.splitTextToSize(String(value), contentW - labelW);
+    pdf.text(valLines, marginL + labelW, y); y += valLines.length * 5.2 + 1;
+  };
+  const arrP = v => Array.isArray(v) && v.length ? v.join(", ") : null;
+  const valP = v => (v && v !== "") ? String(v) : null;
+  const estHomme = form.genre === "Homme";
+  y = 22;
+  pdf.setFontSize(22); pdf.setFont("helvetica", "bold"); pdf.setTextColor(181, 88, 58);
+  pdf.text("meije", marginL, y); pdf.setTextColor(138, 90, 42);
+  pdf.text(".naturo", marginL + pdf.getTextWidth("meije"), y); y += 8;
+  pdf.setFontSize(13); pdf.setFont("helvetica", "normal"); pdf.setTextColor(100, 70, 40);
+  pdf.text("Questionnaire de santé — Anamnèse complète", marginL, y); y += 6;
+  pdf.setDrawColor(181, 88, 58); pdf.setLineWidth(0.5); pdf.line(marginL, y, pageW - marginR, y); y += 5;
+  pdf.setFontSize(9); pdf.setTextColor(140, 110, 80);
+  const dateStr = anamnese.date ? new Date(anamnese.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  pdf.text(`${prenom ? prenom + "  •  " : ""}${anamnese.userEmail || ""}  •  ${dateStr}  •  ${form.genre || ""}`, marginL, y); y += 10;
+  pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
+  pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
+  pdf.text("1", pageW - marginR, pageH - 8, { align: "right" }); pdf.setTextColor(40, 25, 12);
+  addSection("1. Informations générales & Motif");
+  addRow("Genre", valP(form.genre)); addRow("Profession", valP(form.profession));
+  addRow("Situation familiale", valP(form.situationFamiliale));
+  addRow("Tour de taille", valP(form.tourDeTaille) ? form.tourDeTaille + " cm" : null);
+  addRow("Tour de cou", valP(form.tourDeCou) ? form.tourDeCou + " cm" : null);
+  addRow("Vaccin Covid", valP(form.vaccinCovid));
+  if (form.vaccinCovid === "Oui") { addRow("  Lequel(s)", arrP(form.vaccinCovidLequel)); addRow("  Doses", valP(form.vaccinCovidDoses)); }
+  addRow("Mode accouchement", arrP(form.modeAccouchement)); addRow("Allaitement", valP(form.allaitement));
+  addRow("Problématique", valP(form.problematique)); addRow("Depuis", valP(form.dureeProbleme));
+  addRow("Impact vie quotidienne", valP(form.impactVieQuotidienne)); addRow("Objectifs 3 mois", valP(form.objectifs3mois));
+  addSection("2. Antécédents & Traitements");
+  addRow("Maladies chroniques", valP(form.maladiesChroniques)); addRow("Chirurgies", valP(form.chirurgies));
+  addRow("Médicaments", valP(form.medicaments)); addRow("Compléments actuels", valP(form.complementsActuels));
+  addRow("Autres thérapies", valP(form.autresTherapies)); addRow("Médecin traitant", valP(form.medecinTraitant));
+  if (!estHomme) addRow("Gynécologue", valP(form.gyneco));
+  addRow("ATCD familiaux psychiatriques", valP(form.antecedentsFamiliauxPsy));
+  addSection("3. Sommeil & Énergie");
+  addRow("Coucher/Lever", [form.heureCoucher, form.heureLever].filter(Boolean).join(" — ") || null);
+  addRow("Heures sommeil", valP(form.nbreHeuresSommeil) ? form.nbreHeuresSommeil + "h" : null);
+  addRow("Qualité sommeil", valP(form.qualiteSommeil) ? form.qualiteSommeil + "/10" : null);
+  addRow("Difficultés", arrP(form.difficulteSommeil)); addRow("État au réveil", valP(form.etatReveil));
+  addRow("Énergie matin/apm/soir", [form.energieMatin, form.energieApresMidi, form.energieSoir].filter(Boolean).map(v => v + "/10").join(" | ") || null);
+  addRow("Symptômes fatigue", arrP(form.symptomesFatigue));
+  addSection("4. Stress & Santé mentale");
+  addRow("Niveau stress", valP(form.niveauStress) ? form.niveauStress + "/10" : null);
+  addRow("Sources de stress", valP(form.sourceStress)); addRow("Symptômes stress", arrP(form.symptomesStress));
+  addRow("Humeur générale", arrP(form.humeurGenerale)); addRow("Anxiété", valP(form.anxieteAngoisses));
+  addRow("Suivi psy", arrP(form.suiviPsy)); addRow("Suivi psy actuel", valP(form.suiviPsyActuel));
+  addRow("Trauma / choc émotionnel", valP(form.traumaConnu)); addRow("TCA", valP(form.tca));
+  addRow("Relaxation", valP(form.techniquesRelaxation));
+  if (estHomme) {
+    addSection("5. Hormones & Santé masculine");
+    addRow("Libido", valP(form.libido) ? form.libido + "/10" : null);
+    addRow("Vitalité", valP(form.vitaliteGenerale) ? form.vitaliteGenerale + "/10" : null);
+    addRow("Masse musculaire", valP(form.masseMuscuDifficulte)); addRow("Pilosité/Calvitie", valP(form.pilositeChangements));
+    addRow("Troubles urinaires", arrP(form.troublesUrinaires)); addRow("Humeur/irritabilité", arrP(form.humeurHomme));
+    addRow("Antécédents familiaux", valP(form.antecedentsFamiliauxHomme)); addRow("Thyroïde", arrP(form.problemesThyroidiensHomme));
+    const sc = Array.isArray(form.thyroideSymptomesHomme) ? form.thyroideSymptomesHomme.length : 0;
+    const ti = sc <= 5 ? "Risque faible" : sc <= 10 ? "Suspicion modérée" : "Suspicion forte";
+    const tb = sc <= 5 ? [74,122,90] : sc <= 10 ? [184,160,90] : [181,88,58];
+    checkY(20); y += 2; pdf.setFillColor(...tb); pdf.roundedRect(marginL, y-4, contentW, 14, 2, 2, "F");
+    pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(255,255,255);
+    pdf.text(`Dépistage hypothyroïdie : ${sc}/25 — ${ti}`, marginL+3, y+3); pdf.setTextColor(40,25,12); y+=16;
+    if (sc > 0) addRow("Symptômes", form.thyroideSymptomesHomme.join(", "));
+  } else {
+    addSection("5. Hormones & Cycle");
+    addRow("1ères règles", valP(form.agePremieresRegles)); addRow("Régularité", arrP(form.regulariteCycle));
+    addRow("Cycle/Règles", [form.dureeCycle, form.dureeRegles].filter(Boolean).map(v=>v+"j").join(" / ") || null);
+    addRow("Abondance", valP(form.abondanceRegles)); addRow("SPM", arrP(form.symptomesSPM));
+    addRow("Douleurs", valP(form.intensiteDouleurs) ? form.intensiteDouleurs + "/10 — " + (form.descriptionDouleurs||"") : null);
+    addRow("Contraception", arrP(form.contraception)); addRow("Symptômes hormonaux", arrP(form.symptomesHormonaux));
+    addRow("Grossesses/Acc/FC", `${form.grossesses||"—"} / ${form.accouchements||"—"} / ${form.faussesCouches||"—"}`);
+    addRow("Fertilité", arrP(form.problemeFertilite)); addRow("Thyroïde", arrP(form.problemesThyroidiens));
+    const sc = Array.isArray(form.thyroideSymptomes) ? form.thyroideSymptomes.length : 0;
+    const ti = sc <= 5 ? "Risque faible" : sc <= 10 ? "Suspicion modérée" : "Suspicion forte";
+    const tb = sc <= 5 ? [74,122,90] : sc <= 10 ? [184,160,90] : [181,88,58];
+    checkY(20); y += 2; pdf.setFillColor(...tb); pdf.roundedRect(marginL, y-4, contentW, 14, 2, 2, "F");
+    pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(255,255,255);
+    pdf.text(`Dépistage hypothyroïdie : ${sc}/25 — ${ti}`, marginL+3, y+3); pdf.setTextColor(40,25,12); y+=16;
+    if (sc > 0) addRow("Symptômes", form.thyroideSymptomes.join(", "));
+  }
+  addSection("6. Digestion & Immunité");
+  addRow("Transit", arrP(form.transit)); addRow("Problèmes digestifs", arrP(form.problemesDigestifs));
+  addRow("Intolérances", arrP(form.intolerancesAlimentaires)); addRow("Aliments problématiques", valP(form.alimentsProblematiques));
+  addRow("Antécédents digestifs", arrP(form.antecedentsDigestifs)); addRow("Infections récurrentes", arrP(form.infectionsRecurrentes));
+  addRow("Maladies auto-immunes", arrP(form.maladiesAutoImmunes)); addRow("Peau", arrP(form.problemesPeau)); addRow("Allergies", arrP(form.allergies));
+  addSection("7. Alimentation & Hydratation");
+  addRow("Régime", arrP(form.regimeAlimentaire)); addRow("Petit-déjeuner", valP(form.petitDejType));
+  addRow("Déjeuner", valP(form.dejeunerType)); addRow("Dîner", valP(form.dinerType)); addRow("Eau/j", valP(form.quantiteEau));
+  addRow("Tabac", valP(form.tabacStatut)); addRow("Cigarettes/j", valP(form.tabacQuantite)||valP(form.tabacQuantiteLibre));
+  addRow("Cannabis", valP(form.cannabis));
+  addRow("Alcool", valP(form.alcool)); addRow("Verres/j", valP(form.alcoolQuantite)||valP(form.alcoolQuantiteLibre));
+  addRow("Sucre", valP(form.consommationSucre) ? form.consommationSucre+"/10" : null);
+  addRow("Laitiers", valP(form.consommationLaitiers) ? form.consommationLaitiers+"/10" : null);
+  addRow("Gluten", valP(form.consommationGluten) ? form.consommationGluten+"/10" : null);
+  addRow("Appétit", valP(form.niveauAppetit) ? form.niveauAppetit+"/10" : null); addRow("Envies", valP(form.enviesAliments));
+  addSection("8. Activité physique & Environnement");
+  addRow("Niveau activité", valP(form.niveauActivite)); addRow("Types", valP(form.typesActivite));
+  addRow("Heures assis/j", valP(form.heuresAssis)); addRow("Habitation", arrP(form.typeHabitation));
+  addSection("9. Autres systèmes & Examens");
+  addRow("Vision", arrP(form.vision)); addRow("Audition", arrP(form.audition));
+  addRow("Bucco-dentaire", arrP(form.etatDents)); addRow("Cardiovasculaire", arrP(form.systemCardioVasculaire));
+  addRow("Urinaire", arrP(form.systemeUrinaire)); addRow("Température", arrP(form.temperatureCorporelle));
+  addRow("Autres symptômes", valP(form.autresSymptomes));
+  addRow("Analyses sanguines", valP(form.analysesSanguinesRecentes)); addRow("Éléments remarquables", valP(form.elementsRemarquables));
+  addSection("10. Histoire infectieuse & Terrain");
+  addRow("EBV / Mono", valP(form.infect_ebv)); addRow("EBV date/suivi", valP(form.infect_ebv_date));
+  addRow("CMV", valP(form.infect_cmv));
+  addRow("Herpès récurrent", valP(form.infect_herpes)); addRow("Fréquence herpès", valP(form.infect_herpes_freq));
+  addRow("Covid long", valP(form.infect_covidLong)); addRow("Symptômes Covid long", valP(form.infect_covidLong_symptomes));
+  addRow("Lyme", valP(form.infect_lyme)); addRow("Traitement Lyme", valP(form.infect_lyme_traitement));
+  addRow("Helicobacter pylori", valP(form.infect_helico));
+  addRow("Parasitose", valP(form.infect_parasites)); addRow("Parasite / traitement", valP(form.infect_parasites_lequel));
+  addRow("Candidose", valP(form.infect_candidose)); addRow("Localisation candidose", valP(form.infect_candidose_localisation));
+  addRow("Cures antibiotiques (vie)", valP(form.infect_antibio_total));
+  addRow("Dernière cure antibio", valP(form.infect_antibio_derniere)); addRow("Molécule", valP(form.infect_antibio_molecule));
+  addRow("IST antécédents", valP(form.infect_ist)); addRow("Dépistage VIH", valP(form.infect_vih));
+  addSection("11. Motivation & Conclusion");
+  addRow("Vision 6 mois", valP(form.visionDans6Mois));
+  addRow("Motivation", valP(form.motivationChangement) ? form.motivationChangement+"/10" : null);
+  addRow("Freins", valP(form.freins)); addRow("Attentes", valP(form.attentesNaturopathe));
+  addRow("Prêt(e) à", arrP(form.pret)); addRow("Questions", valP(form.questions));
+  if (bilans?.length > 0) { addSection("Documents joints"); bilans.forEach((b,i) => addRow(`Document ${i+1}`, b.name||b.url)); }
+  const totalPages = pdf.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
+    pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
+    pdf.text(String(i), pageW - marginR, pageH - 8, { align: "right" });
+  }
+  pdf.save(`anamnese_${(prenom||"cliente").toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 };
 
 const GLOBAL_CSS = `
@@ -1112,6 +1229,13 @@ function Cliente({ user, onLogout }) {
             // Notif réponse praticienne sur suivi
             const lastEntryWithReponse = [...entries].reverse().find(e => e.reponsePraticienne && e.reponseDate && Date.now()-new Date(e.reponseDate).getTime()<7*24*60*60*1000);
             if(lastEntryWithReponse) alerts.push(<div key="rep" style={{background:P.cSurface,border:`1px solid ${P.cGreenBorder}`,borderRadius:14,padding:"14px 18px",marginBottom:10}}><p style={{fontSize:10,color:P.cGreen,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:4}}>💬 Meije a répondu à ton suivi</p><p style={{color:P.cText,fontSize:13,lineHeight:1.6}}>{lastEntryWithReponse.reponsePraticienne}</p></div>);
+            // Alerte suivi RDV — prochaine consultation débloquée et non remplie
+            const prochainRdv = [1,2,3,4,5,6].find(n => {
+              const done = suiviRdvList.some(s=>s.numRdv===n);
+              const prevDone = n===1 || suiviRdvList.some(s=>s.numRdv===n-1);
+              return !done && prevDone;
+            });
+            if(prochainRdv) alerts.push(<button key="rdv" onClick={()=>{setSuiviRdvNum(prochainRdv);setSuiviRdvView(true);}} style={{width:"100%",background:P.cTerraDim,border:`1px solid rgba(181,88,58,0.25)`,borderRadius:14,padding:"14px 18px",marginBottom:10,textAlign:"left",cursor:"pointer"}}><p style={{fontSize:10,color:P.cTerra,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:4}}>📋 Avant ton prochain rendez-vous</p><p style={{color:P.cText,fontSize:13,fontWeight:500}}>Remplis le questionnaire consultation {prochainRdv} →</p></button>);
             return alerts.length>0?<div style={{marginBottom:8}}>{alerts}</div>:null;
           })()}
           <p style={{color:P.cTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"2px",marginBottom:12}}>Mes dossiers</p>
@@ -1932,9 +2056,31 @@ function Praticienne({ user, onLogout }) {
               <div style={{display:"flex",gap:8,marginBottom:16}}>
                 <Btn onClick={()=>setAnamneseMode("view")} variant={anamneseMode==="view"?"primary":"ghost"} theme="p" small>Réponses</Btn>
                 <Btn onClick={()=>setAnamneseMode("upload")} variant={anamneseMode==="upload"?"primary":"ghost"} theme="p" small>Uploader PDF</Btn>
-                {anamneses.length>0&&anamneses[0].pdfText&&<Btn onClick={()=>downloadAnamnesePDF(anamneses[0],selected.prenom)} variant="ghost" theme="p" small>⬇ Télécharger PDF</Btn>}
+                {anamneses.length>0&&anamneses[0].form&&<Btn onClick={()=>downloadAnamnesePDF(anamneses[0],selected.prenom)} variant="ghost" theme="p" small>⬇ Télécharger PDF</Btn>}
               </div>
-              {anamneseMode==="view"&&(anamneses.length===0?<EmptyState message={`${selected.prenom} n'a pas encore rempli le questionnaire.`} theme="p"/>:anamneses.map(a=>(<div key={a.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><p style={{color:P.pTextDim,fontSize:12}}>Rempli le {new Date(a.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}{a.saisieParPraticienne&&<span style={{color:P.pAccent,marginLeft:8}}>· Saisi par toi</span>}</p></div>{a.bilans?.length>0&&<div style={{marginBottom:16}}>{a.bilans.map((b,i)=><a key={i} href={fixPdfUrl(b.url)} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:8,padding:"7px 12px",color:P.pAccent,fontSize:13,textDecoration:"none",marginRight:8,marginBottom:8}}><span>{b.name}</span><span style={{opacity:0.6,fontSize:10}}>↓</span></a>)}</div>}{a.form&&Object.keys(a.form).length>0&&(<div style={{display:"flex",flexDirection:"column",gap:6}}>{[["Genre",a.form.genre],["Problématique principale",a.form.problematique],["Objectifs 3 mois",a.form.objectifs3mois],["Antécédents médicaux",a.form.maladiesChroniques],["Médicaments",a.form.medicaments],["Compléments actuels",a.form.complementsActuels],["Tour de taille",a.form.tourDeTaille&&`${a.form.tourDeTaille} cm`],["Tour de cou",a.form.tourDeCou&&`${a.form.tourDeCou} cm`],["Sommeil",a.form.qualiteSommeil&&`${a.form.qualiteSommeil}/10`],["Stress",a.form.niveauStress&&`${a.form.niveauStress}/10`],["Cycle",a.form.dureeCycle&&`${a.form.dureeCycle}j / règles ${a.form.dureeRegles}j`],["Douleurs",a.form.intensiteDouleurs&&`${a.form.intensiteDouleurs}/10 — ${a.form.descriptionDouleurs}`]].filter(([_,v])=>v).map(([label,val])=>(<div key={label} style={{display:"flex",gap:12,background:P.pSurface2,borderRadius:8,padding:"10px 14px"}}><span style={{color:P.pTextDim,fontSize:12,minWidth:170,flexShrink:0}}>{label}</span><span style={{color:P.pTextMid,fontSize:13,lineHeight:1.5}}>{val}</span></div>))}</div>)}</div>)))}
+              {anamneseMode==="view"&&(anamneses.length===0?<EmptyState message={`${selected.prenom} n'a pas encore rempli le questionnaire.`} theme="p"/>:anamneses.map(a=>(<div key={a.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><p style={{color:P.pTextDim,fontSize:12}}>Rempli le {new Date(a.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}{a.saisieParPraticienne&&<span style={{color:P.pAccent,marginLeft:8}}>· Saisi par toi</span>}</p></div>{a.bilans?.length>0&&<div style={{marginBottom:16}}>{a.bilans.map((b,i)=><a key={i} href={fixPdfUrl(b.url)} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:8,padding:"7px 12px",color:P.pAccent,fontSize:13,textDecoration:"none",marginRight:8,marginBottom:8}}><span>{b.name}</span><span style={{opacity:0.6,fontSize:10}}>↓</span></a>)}</div>}{a.form&&Object.keys(a.form).length>0&&(()=>{
+  const estHomme = a.form.genre === "Homme";
+  const symList = estHomme ? (a.form.thyroideSymptomesHomme||[]) : (a.form.thyroideSymptomes||[]);
+  const scThy = symList.length;
+  const tiThy = scThy <= 5 ? "Risque faible" : scThy <= 10 ? "Suspicion modérée" : "Suspicion forte";
+  const colThy = scThy <= 5 ? P.pGreen : scThy <= 10 ? "#B8A05A" : P.pAccent;
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+      {[["Genre",a.form.genre],["Problématique principale",a.form.problematique],["Objectifs 3 mois",a.form.objectifs3mois],["Antécédents médicaux",a.form.maladiesChroniques],["Médicaments",a.form.medicaments],["Compléments actuels",a.form.complementsActuels],["Tour de taille",a.form.tourDeTaille&&`${a.form.tourDeTaille} cm`],["Tour de cou",a.form.tourDeCou&&`${a.form.tourDeCou} cm`],["Sommeil",a.form.qualiteSommeil&&`${a.form.qualiteSommeil}/10`],["Stress",a.form.niveauStress&&`${a.form.niveauStress}/10`],["Cycle",a.form.dureeCycle&&`${a.form.dureeCycle}j / règles ${a.form.dureeRegles}j`],["Douleurs",a.form.intensiteDouleurs&&`${a.form.intensiteDouleurs}/10 — ${a.form.descriptionDouleurs}`]].filter(([_,v])=>v).map(([label,val])=>(<div key={label} style={{display:"flex",gap:12,background:P.pSurface2,borderRadius:8,padding:"10px 14px"}}><span style={{color:P.pTextDim,fontSize:12,minWidth:170,flexShrink:0}}>{label}</span><span style={{color:P.pTextMid,fontSize:13,lineHeight:1.5}}>{val}</span></div>))}
+      <div style={{background:colThy+"18",border:`1px solid ${colThy}44`,borderRadius:10,padding:"12px 14px",marginTop:4}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:scThy>0?10:0}}>
+          <span style={{color:colThy,fontSize:12,fontWeight:600}}>🔎 Dépistage hypothyroïdie fonctionnelle</span>
+          <span style={{color:colThy,fontWeight:700,fontSize:14}}>{scThy}/25 — {tiThy}</span>
+        </div>
+        {scThy>0&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            {symList.map((s,i)=><span key={i} style={{background:colThy+"22",border:`1px solid ${colThy}44`,borderRadius:20,padding:"3px 10px",fontSize:11,color:colThy,fontFamily:P.sans}}>{s}</span>)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+})()}</div>)))}
               {anamneseMode==="upload"&&(<div style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:18}}><input type="file" multiple accept="image/*,application/pdf" onChange={e=>uploadAnamnesePDF(Array.from(e.target.files))} style={{color:P.pTextMid,fontSize:13,marginBottom:12,display:"block",width:"100%"}}/>{uploadingAnamnese&&<p style={{color:P.pAccent,fontSize:13}}>Upload en cours…</p>}{uploadedAnamnese.length>0&&<div style={{marginTop:12}}>{uploadedAnamnese.map((f,i)=><FileTag key={i} name={f.name} theme="p"/>)}<Btn onClick={saveAnamnesePDF} disabled={savingAnamnese} variant="primary" style={{marginTop:12}}>{savingAnamnese?"Enregistrement…":"Enregistrer dans le dossier"}</Btn></div>}</div>)}
             </div>
           )}
