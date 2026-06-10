@@ -778,6 +778,24 @@ const downloadSuiviRdvPDF = async (rdv, prenom) => {
 };
 
 
+const SuiviRdvOuiNon = ({ value, onChange }) => (
+  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    {["Oui, toujours", "En partie", "Non, ça a évolué"].map(opt => (
+      <button key={opt} onClick={() => onChange(opt)} style={{ padding: "9px 16px", borderRadius: 20, border: `1.5px solid ${value === opt ? P.cGreen : P.cBorder}`, background: value === opt ? P.cGreenDim : "transparent", color: value === opt ? P.cGreen : P.cTextMid, fontFamily: P.sans, fontSize: 12, fontWeight: value === opt ? 600 : 400, cursor: "pointer" }}>{opt}</button>
+    ))}
+  </div>
+);
+const SuiviRdvField = ({ label, children }) => (
+  <div style={{ marginBottom: 20 }}>
+    <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>{label}</p>
+    {children}
+  </div>
+);
+const SuiviRdvTA = ({ value, onChange, placeholder, rows = 3 }) => (
+  <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
+    style={{ width: "100%", background: P.cSurface, border: `1px solid ${P.cBorder}`, borderRadius: 10, padding: "12px 14px", color: P.cText, fontFamily: P.sans, fontSize: 13, resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }} />
+);
+
 function SuiviRdv({ user, numRdv, existingData, onDone }) {
   const [form, setForm] = useState({
     problematique: existingData?.problematique || "",
@@ -823,30 +841,10 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
     downloadSuiviRdvPDF({ ...form, numRdv, date: existingData?.date || new Date().toISOString() }, user.prénom);
   };
 
-  const Field = ({ label, children }) => (
-    <div style={{ marginBottom: 20 }}>
-      <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>{label}</p>
-      {children}
-    </div>
-  );
-
-  const TA = ({ value, onChange, placeholder, rows = 3 }) => (
-    <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
-      style={{ width: "100%", background: P.cSurface, border: `1px solid ${P.cBorder}`, borderRadius: 10, padding: "12px 14px", color: P.cText, fontFamily: P.sans, fontSize: 13, resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }} />
-  );
-
-  const OUI_NON = ({ value, onChange }) => (
-    <div style={{ display: "flex", gap: 8 }}>
-      {["Oui, toujours", "En partie", "Non, ça a évolué"].map(opt => (
-        <button key={opt} onClick={() => onChange(opt)} style={{ padding: "9px 16px", borderRadius: 20, border: `1.5px solid ${value === opt ? P.cGreen : P.cBorder}`, background: value === opt ? P.cGreenDim : "transparent", color: value === opt ? P.cGreen : P.cTextMid, fontFamily: P.sans, fontSize: 12, fontWeight: value === opt ? 600 : 400, cursor: "pointer" }}>{opt}</button>
-      ))}
-    </div>
-  );
-
   return (
     <div style={{ minHeight: "100vh", background: P.cBg, paddingBottom: 80, fontFamily: P.sans }}>
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
-      <div style={{ background: P.cSurface, borderBottom: `1px solid ${P.cBorder}`, padding: "16px 20px", position: "sticky", top: 0, zIndex: 50 }}>
+      <div style={{ background: P.cSurface, borderBottom: `1px solid ${P.cBorder}`, padding: "16px 20px" }}>
         <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <p style={{ fontFamily: P.serif, fontSize: 20, color: P.cText, fontWeight: 300 }}>Consultation {numRdv}</p>
@@ -865,57 +863,57 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
         {/* Problématique */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
           <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>🎯 Problématique principale</p>
-          <Field label="Quelle est votre problématique principale en ce moment ?">
-            <TA value={form.problematique} onChange={set("problematique")} placeholder="Décrivez votre problématique principale..." rows={3} />
-          </Field>
-          <Field label="Est-ce la même problématique qu'à la consultation précédente ?">
-            <OUI_NON value={form.memeProblematique} onChange={v => setForm(f => ({ ...f, memeProblematique: v }))} />
-          </Field>
-          <Field label="Comment a-t-elle évolué depuis notre dernière consultation ?">
-            <TA value={form.evolution} onChange={set("evolution")} placeholder="Mieux, pareil, plus difficile ? Décrivez..." rows={3} />
-          </Field>
+          <SuiviRdvField label="Quelle est votre problématique principale en ce moment ?">
+            <SuiviRdvTA value={form.problematique} onChange={set("problematique")} placeholder="Décrivez votre problématique principale..." rows={3} />
+          </SuiviRdvField>
+          <SuiviRdvField label="Est-ce la même problématique qu'à la consultation précédente ?">
+            <SuiviRdvOuiNon value={form.memeProblematique} onChange={v => setForm(f => ({ ...f, memeProblematique: v }))} />
+          </SuiviRdvField>
+          <SuiviRdvField label="Comment a-t-elle évolué depuis notre dernière consultation ?">
+            <SuiviRdvTA value={form.evolution} onChange={set("evolution")} placeholder="Mieux, pareil, plus difficile ? Décrivez..." rows={3} />
+          </SuiviRdvField>
         </div>
 
         {/* Axes de suivi */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
           <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>🔍 Axes de suivi</p>
-          <Field label="🌙 Sommeil — Comment dormez-vous depuis la dernière consultation ?">
-            <TA value={form.sommeil} onChange={set("sommeil")} placeholder="Endormissement, réveils, qualité, heures..." rows={2} />
-          </Field>
-          <Field label="🌿 Digestion — Comment est votre digestion ?">
-            <TA value={form.digestion} onChange={set("digestion")} placeholder="Transit, ballonnements, douleurs, confort après repas..." rows={2} />
-          </Field>
-          <Field label="🌸 Cycle — Où en êtes-vous avec votre cycle ?">
-            <TA value={form.cycle} onChange={set("cycle")} placeholder="Régularité, douleurs, SPM, phase actuelle..." rows={2} />
-          </Field>
-          <Field label="😮‍💨 Anxiété / Stress — Comment le gérez-vous ?">
-            <TA value={form.anxiete} onChange={set("anxiete")} placeholder="Niveau de stress, ruminations, crises, gestion..." rows={2} />
-          </Field>
-          <Field label="🔎 Thyroïde — Avez-vous remarqué des changements ?">
-            <TA value={form.thyroide} onChange={set("thyroide")} placeholder="Frilosité, fatigue matinale, cheveux, humeur, transit..." rows={2} />
-          </Field>
+          <SuiviRdvField label="🌙 Sommeil — Comment dormez-vous depuis la dernière consultation ?">
+            <SuiviRdvTA value={form.sommeil} onChange={set("sommeil")} placeholder="Endormissement, réveils, qualité, heures..." rows={2} />
+          </SuiviRdvField>
+          <SuiviRdvField label="🌿 Digestion — Comment est votre digestion ?">
+            <SuiviRdvTA value={form.digestion} onChange={set("digestion")} placeholder="Transit, ballonnements, douleurs, confort après repas..." rows={2} />
+          </SuiviRdvField>
+          <SuiviRdvField label="🌸 Cycle — Où en êtes-vous avec votre cycle ?">
+            <SuiviRdvTA value={form.cycle} onChange={set("cycle")} placeholder="Régularité, douleurs, SPM, phase actuelle..." rows={2} />
+          </SuiviRdvField>
+          <SuiviRdvField label="😮‍💨 Anxiété / Stress — Comment le gérez-vous ?">
+            <SuiviRdvTA value={form.anxiete} onChange={set("anxiete")} placeholder="Niveau de stress, ruminations, crises, gestion..." rows={2} />
+          </SuiviRdvField>
+          <SuiviRdvField label="🔎 Thyroïde — Avez-vous remarqué des changements ?">
+            <SuiviRdvTA value={form.thyroide} onChange={set("thyroide")} placeholder="Frilosité, fatigue matinale, cheveux, humeur, transit..." rows={2} />
+          </SuiviRdvField>
         </div>
 
         {/* Compléments et difficultés */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
           <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>💊 Compléments & Difficultés</p>
-          <Field label="Avez-vous pris vos compléments régulièrement ?">
-            <TA value={form.complements} onChange={set("complements")} placeholder="Lesquels pris, lesquels oubliés, réactions ressenties..." rows={2} />
-          </Field>
-          <Field label="Quelles difficultés avez-vous rencontrées ?">
-            <TA value={form.difficultes} onChange={set("difficultes")} placeholder="Adhérence au protocole, contraintes, effets inattendus..." rows={2} />
-          </Field>
+          <SuiviRdvField label="Avez-vous pris vos compléments régulièrement ?">
+            <SuiviRdvTA value={form.complements} onChange={set("complements")} placeholder="Lesquels pris, lesquels oubliés, réactions ressenties..." rows={2} />
+          </SuiviRdvField>
+          <SuiviRdvField label="Quelles difficultés avez-vous rencontrées ?">
+            <SuiviRdvTA value={form.difficultes} onChange={set("difficultes")} placeholder="Adhérence au protocole, contraintes, effets inattendus..." rows={2} />
+          </SuiviRdvField>
         </div>
 
         {/* Positif + Commentaire */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
           <p style={{ color: P.cGreen, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>✨ Bilan & Message</p>
-          <Field label="Qu'est-ce qui a changé positivement depuis la dernière consultation ?">
-            <TA value={form.positif} onChange={set("positif")} placeholder="Même petites améliorations, notez-les !" rows={2} />
-          </Field>
-          <Field label="💬 Commentaire pour Meije">
-            <TA value={form.commentaire} onChange={set("commentaire")} placeholder="Tout ce que vous souhaitez partager avec Meije avant le rendez-vous..." rows={3} />
-          </Field>
+          <SuiviRdvField label="Qu'est-ce qui a changé positivement depuis la dernière consultation ?">
+            <SuiviRdvTA value={form.positif} onChange={set("positif")} placeholder="Même petites améliorations, notez-les !" rows={2} />
+          </SuiviRdvField>
+          <SuiviRdvField label="💬 Commentaire pour Meije">
+            <SuiviRdvTA value={form.commentaire} onChange={set("commentaire")} placeholder="Tout ce que vous souhaitez partager avec Meije avant le rendez-vous..." rows={3} />
+          </SuiviRdvField>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
