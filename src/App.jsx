@@ -978,8 +978,8 @@ function Cliente({ user, onLogout }) {
       if(data?.complements)setComplements(data.complements);
       setUserProfil({profils:data?.profils||[],axesManuel:data?.axesManuel||[],axesExclus:data?.axesExclus||[],visioLink:data?.visioLink||""});
     });
-    const q7=query(collection(db,"suivis_rdv"),where("userUid","==",user.uid),orderBy("date","asc"));
-    const u7=onSnapshot(q7,s=>setSuiviRdvList(s.docs.map(d=>({id:d.id,...d.data()}))));
+    const q7=query(collection(db,"suivis_rdv"),where("userUid","==",user.uid));
+    const u7=onSnapshot(q7,s=>setSuiviRdvList(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.numRdv)-Number(b.numRdv))));
     return()=>{u();u2();u3();u4();u5();u6();u7();};
   },[user.uid]);
 
@@ -1028,7 +1028,7 @@ function Cliente({ user, onLogout }) {
 
   const submit=async()=>{
     const entryData = {
-      userUid:user.uid, userEmail:user.email, userPrénom:user.prénom,
+      userUid:user.uid, userEmail:user.email, userPrénom:user.prénom, userPrenom:user.prénom||user.displayName||user.email?.split("@")[0]||"",
       weekLabel:wk(), date:new Date().toISOString(),
       scores, notes, scoresProfi,
       cyclePhase, cycleNote, complementsPris,
@@ -1445,8 +1445,8 @@ function Praticienne({ user, onLogout }) {
     let u6=()=>{};
     try{const q6=query(collection(db,"notes_privees"),where("clientUid","==",c.uid),orderBy("date","desc"));u6=onSnapshot(q6,s=>setNoteHistory(s.docs.map(d=>({id:d.id,...d.data()}))||[]),()=>setNoteHistory([]));}catch{setNoteHistory([]);}
     setSuivisRdvClient([]);
-    const q8=query(collection(db,"suivis_rdv"),where("userUid","==",c.uid),orderBy("date","asc"));
-    const u8=onSnapshot(q8,s=>setSuivisRdvClient(s.docs.map(d=>({id:d.id,...d.data()}))||[]),()=>setSuivisRdvClient([]));
+    const q8=query(collection(db,"suivis_rdv"),where("userUid","==",c.uid));
+    const u8=onSnapshot(q8,s=>setSuivisRdvClient(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.numRdv)-Number(b.numRdv))||[]),()=>setSuivisRdvClient([]));
     window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6,u8];
     setPrivateNotes("");setMainView("fiche");
   },[]);
@@ -1646,7 +1646,7 @@ function Praticienne({ user, onLogout }) {
                     {a.type==="anamnese"&&clientCible&&(()=>{
                       const anamClientData=a;
                       return(
-                        <button onClick={async(e)=>{e.stopPropagation();try{const q=query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid),orderBy("date","desc"));const{getDocs}=await import("firebase/firestore");const snap=await getDocs(q);if(!snap.empty){const an={id:snap.docs[0].id,...snap.docs[0].data()};downloadAnamnesePDF(an,prenom);}}catch(err){showToast("Erreur téléchargement");} }} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        <button onClick={async(e)=>{e.stopPropagation();try{const q=query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid));const{getDocs}=await import("firebase/firestore");const snap=await getDocs(q);if(!snap.empty){const docs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>new Date(y.date)-new Date(x.date));downloadAnamnesePDF(docs[0],prenom);}else{showToast("Aucun questionnaire trouvé");}}catch(err){showToast("Erreur téléchargement");} }} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
                           ⬇ PDF
                         </button>
                       );
