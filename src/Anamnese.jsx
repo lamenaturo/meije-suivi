@@ -1,3 +1,4 @@
+import BilansFonctionnels from "./BilansFonctionnels";
 import { useState, useEffect } from "react";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
@@ -23,7 +24,8 @@ const ETAPES = [
   { num: 8, label: "Activité physique & Environnement" },
   { num: 9, label: "Autres systèmes & Examens" },
   { num: 10, label: "Histoire infectieuse & Terrain" },
-  { num: 11, label: "Motivation & Conclusion" },
+  { num: 11, label: "Bilans fonctionnels" },
+  { num: 12, label: "Motivation & Conclusion" },
 ];
 
 const initForm = () => ({
@@ -198,7 +200,7 @@ const MesuresCorporelles = ({ form, set }) => (
   </div>
 );
 const DepistageThyroide = ({ checked = [], nsp = [], onToggle, onToggleNsp }) => {
-  const SYM = ["Marbrures de la peau","Frilosité","Extrémités froides (voire Raynaud)","Raucité de voix","Prise de poids ou difficile à gérer","Fatigue dès le matin","Œdème le matin (yeux, doigts, orteils)","Température matinale basse","Courbatures musculaires","Rigidité articulaire le matin (fibromyalgie)","Peau sèche (talons, coudes, tibias)","Perte de cheveux / ongles fragiles","Voûte plantaire aplatie / affaissée","Queue de sourcil peu fournie ou dégarnie","Cholestérol élevé avec LDL élevés","Bradypsychie (cerveau qui tourne au ralenti)","Gastroparésie (lourdeur d'estomac après repas)","Infections respiratoires / ORL à répétition","Migraines réfractaires aux traitements","Constipation","Homocystéine élevée","GOT / GPT élevés","HTA diastolique","Vitamine A basse / bêtacarotène normale","Moral instable (dépression)"];
+  const SYM = ["Marbrures de la peau","Frilosité","Extrémités froides (voire Raynaud)","Raucité de voix","Prise de poids ou difficile à gérer","Fatigue dès le matin","Œdème le matin (yeux, doigts, orteils)","Température matinale basse","Courbatures musculaires","Rigidité articulaire le matin (fibromyalgie)","Peau sèche (talons, coudes, tibias)","Perte de cheveux / ongles fragiles","Queue de sourcil peu fournie ou dégarnie","Cholestérol élevé avec LDL élevés","Bradypsychie (cerveau qui tourne au ralenti)","Gastroparésie (lourdeur d'estomac après repas)","Infections respiratoires / ORL à répétition","Migraines réfractaires aux traitements","Constipation","Homocystéine élevée","GOT / GPT élevés","HTA diastolique","Vitamine A basse / bêtacarotène normale","Moral instable (dépression)"];
   const NSP_LIST = ["Cholestérol élevé avec LDL élevés","Homocystéine élevée","GOT / GPT élevés","HTA diastolique","Vitamine A basse / bêtacarotène normale"];
   const score = checked.length;
   const interp = score <= 5 ? { label: "Risque faible", color: C.sage, bg: C.sageDim }
@@ -229,11 +231,11 @@ const DepistageThyroide = ({ checked = [], nsp = [], onToggle, onToggleNsp }) =>
       </div>
       <div style={{ marginTop: 18, background: interp.bg, border: `1px solid ${interp.color}33`, borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div>
-          <p style={{ color: interp.color, fontWeight: 700, fontSize: 15 }}>{score} / 25 symptômes</p>
+          <p style={{ color: interp.color, fontWeight: 700, fontSize: 15 }}>{score} / 24 symptômes</p>
           <p style={{ color: interp.color, fontSize: 12, marginTop: 3, opacity: 0.85 }}>{interp.label}</p>
         </div>
         <div style={{ display: "flex", gap: 3 }}>
-          {Array.from({ length: 25 }).map((_, i) => <div key={i} style={{ width: 6, height: 22, borderRadius: 3, background: i < score ? interp.color : C.border2 }} />)}
+          {Array.from({ length: 24 }).map((_, i) => <div key={i} style={{ width: 6, height: 22, borderRadius: 3, background: i < score ? interp.color : C.border2 }} />)}
         </div>
       </div>
     </div>
@@ -285,7 +287,7 @@ Troubles urinaires : ${arr(form.troublesUrinaires)}
 Humeur/irritabilité : ${arr(form.humeurHomme)}
 Antécédents familiaux masculins : ${val(form.antecedentsFamiliauxHomme)}
 Thyroïde : ${arr(form.problemesThyroidiensHomme)}
-Dépistage hypothyroïdie : ${(Array.isArray(form.thyroideSymptomesHomme) ? form.thyroideSymptomesHomme.length : 0)}/25 — ${(Array.isArray(form.thyroideSymptomesHomme) ? form.thyroideSymptomesHomme.length : 0) <= 5 ? "Risque faible" : (Array.isArray(form.thyroideSymptomesHomme) ? form.thyroideSymptomesHomme.length : 0) <= 10 ? "Suspicion modérée" : "Suspicion forte"}
+Dépistage hypothyroïdie : ${(Array.isArray(form.thyroideSymptomesHomme) ? form.thyroideSymptomesHomme.length : 0)}/24 — ${(Array.isArray(form.thyroideSymptomesHomme) ? form.thyroideSymptomesHomme.length : 0) <= 5 ? "Risque faible" : (Array.isArray(form.thyroideSymptomesHomme) ? form.thyroideSymptomesHomme.length : 0) <= 10 ? "Suspicion modérée" : "Suspicion forte"}
 Symptômes cochés : ${arr(form.thyroideSymptomesHomme)}
 ` : `══ 5. HORMONES & CYCLE ══
 1ères règles : ${val(form.agePremieresRegles)} | Cycle : ${val(form.dureeCycle)}j / Règles : ${val(form.dureeRegles)}j
@@ -296,7 +298,7 @@ Contraception : ${arr(form.contraception)} depuis ${val(form.dureeContraception)
 Symptômes hormonaux : ${arr(form.symptomesHormonaux)}
 Grossesses/Accouchements/FC : ${val(form.grossesses)} / ${val(form.accouchements)} / ${val(form.faussesCouches)}
 Fertilité : ${arr(form.problemeFertilite)} | Thyroïde : ${arr(form.problemesThyroidiens)}
-Dépistage hypothyroïdie : ${(Array.isArray(form.thyroideSymptomes) ? form.thyroideSymptomes.length : 0)}/25 — ${(Array.isArray(form.thyroideSymptomes) ? form.thyroideSymptomes.length : 0) <= 5 ? "Risque faible" : (Array.isArray(form.thyroideSymptomes) ? form.thyroideSymptomes.length : 0) <= 10 ? "Suspicion modérée" : "Suspicion forte"}
+Dépistage hypothyroïdie : ${(Array.isArray(form.thyroideSymptomes) ? form.thyroideSymptomes.length : 0)}/24 — ${(Array.isArray(form.thyroideSymptomes) ? form.thyroideSymptomes.length : 0) <= 5 ? "Risque faible" : (Array.isArray(form.thyroideSymptomes) ? form.thyroideSymptomes.length : 0) <= 10 ? "Suspicion modérée" : "Suspicion forte"}
 Symptômes cochés : ${arr(form.thyroideSymptomes)}
 `}
 ══ 6. DIGESTION & IMMUNITÉ ══
@@ -432,7 +434,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
     const tb = sc <= 5 ? [74,122,90] : sc <= 10 ? [184,160,90] : [181,88,58];
     checkY(20); y += 2; pdf.setFillColor(...tb); pdf.roundedRect(marginL, y-4, contentW, 14, 2, 2, "F");
     pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(255,255,255);
-    pdf.text(`Dépistage hypothyroïdie : ${sc}/25 — ${ti}`, marginL+3, y+3); pdf.setTextColor(40,25,12); y+=16;
+    pdf.text(`Dépistage hypothyroïdie : ${sc}/24 — ${ti}`, marginL+3, y+3); pdf.setTextColor(40,25,12); y+=16;
     if (sc > 0) addRow("Symptômes", form.thyroideSymptomesHomme.join(", "));
   } else {
     addSection("5. Hormones & Cycle");
@@ -448,7 +450,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
     const tb = sc <= 5 ? [74,122,90] : sc <= 10 ? [184,160,90] : [181,88,58];
     checkY(20); y += 2; pdf.setFillColor(...tb); pdf.roundedRect(marginL, y-4, contentW, 14, 2, 2, "F");
     pdf.setFontSize(9); pdf.setFont("helvetica","bold"); pdf.setTextColor(255,255,255);
-    pdf.text(`Dépistage hypothyroïdie : ${sc}/25 — ${ti}`, marginL+3, y+3); pdf.setTextColor(40,25,12); y+=16;
+    pdf.text(`Dépistage hypothyroïdie : ${sc}/24 — ${ti}`, marginL+3, y+3); pdf.setTextColor(40,25,12); y+=16;
     if (sc > 0) addRow("Symptômes", form.thyroideSymptomes.join(", "));
   }
   addSection("6. Digestion & Immunité");
@@ -524,9 +526,9 @@ export default function Anamnese({ user, onDone, readonly = false, existingData 
   useEffect(() => {
     if (!docId) return;
     const timer = setTimeout(async () => {
-      try { await updateDoc(doc(db, "anamneses", docId), { form, bilans: docs, bilanScores, pdfText: generatePdfText(form, user), date: new Date().toISOString() }); }
+      try { await updateDoc(doc(db, "anamneses", docId), { form, bilans: docs, bilanScores, date: new Date().toISOString() }); }
       catch (e) { console.error("Autosave:", e); }
-    }, 1500);
+    }, 3000);
     return () => clearTimeout(timer);
   }, [form, docs, docId, user]);
 
@@ -980,6 +982,21 @@ export default function Anamnese({ user, onDone, readonly = false, existingData 
         )}
 
         {etape === 11 && (
+          <div>
+            <SectionTitle>Bilans fonctionnels ciblés</SectionTitle>
+            <BilansFonctionnels
+              form={form}
+              bilanScores={bilanScores}
+              setBilanScores={setBilanScores}
+            />
+            <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
+              <button onClick={() => goToStep(10)} style={{ flex: 1, padding: "13px 20px", borderRadius: 12, border: `1px solid ${C.border2}`, background: C.surface, color: C.textMid, fontSize: 14, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>← Précédent</button>
+              <button onClick={() => goToStep(12)} style={{ flex: 2, padding: "13px 20px", borderRadius: 12, border: "none", background: C.terra, color: "white", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>Suivant →</button>
+            </div>
+          </div>
+        )}
+
+        {etape === 12 && (
           <div>
             <SectionTitle>Vision & Motivation</SectionTitle>
             <Field label="Comment tu te vois dans 6 mois si tout se passe bien ?"><Textarea value={form.visionDans6Mois} onChange={set("visionDans6Mois")} placeholder="Décris ton idéal santé dans 6 mois..." rows={3} /></Field>
