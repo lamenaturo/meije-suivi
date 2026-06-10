@@ -731,6 +731,7 @@ const downloadSuiviRdvPDF = async (rdv, prenom) => {
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210, pageH = 297, marginL = 18, marginR = 18, contentW = pageW - marginL - marginR;
   let y = 22;
+  const numRdvSafe = Number(rdv.numRdv) || rdv.numRdv;
   const date = new Date(rdv.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   const prenomSafe = prenom || "Cliente";
   // En-tête
@@ -738,7 +739,7 @@ const downloadSuiviRdvPDF = async (rdv, prenom) => {
   pdf.text("meije", marginL, y); pdf.setTextColor(138, 90, 42);
   pdf.text(".naturo", marginL + pdf.getTextWidth("meije"), y); y += 7;
   pdf.setFontSize(12); pdf.setFont("helvetica", "normal"); pdf.setTextColor(100, 70, 40);
-  pdf.text(`Suivi consultation ${rdv.numRdv} — ${prenomSafe}`, marginL, y); y += 5;
+  pdf.text(`Suivi consultation ${numRdvSafe} — ${prenomSafe}`, marginL, y); y += 5;
   pdf.setDrawColor(181, 88, 58); pdf.setLineWidth(0.5); pdf.line(marginL, y, pageW - marginR, y); y += 5;
   pdf.setFontSize(9); pdf.setTextColor(140, 110, 80);
   pdf.text(`Rempli le ${date}  •  Meije Delmonte — Naturopathe fonctionnelle`, marginL, y); y += 10;
@@ -774,7 +775,7 @@ const downloadSuiviRdvPDF = async (rdv, prenom) => {
     pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
     pdf.text(String(i), pageW - marginR, pageH - 8, { align: "right" });
   }
-  pdf.save(`suivi_rdv${rdv.numRdv}_${prenomSafe.toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+  pdf.save(`suivi_rdv${numRdvSafe}_${prenomSafe.toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 };
 
 
@@ -1966,7 +1967,7 @@ function Praticienne({ user, onLogout }) {
             <div>
               <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:14}}>Questionnaires de suivi par consultation</p>
               {[1,2,3,4,5,6].map(n=>{
-                const rdv=suivisRdvClient?.find(s=>s.numRdv===n);
+                const rdv=suivisRdvClient?.find(s=>Number(s.numRdv)===n);
                 return(
                   <div key={n} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${rdv?P.pGreen+"44":P.pBorder}`,padding:"16px 18px",marginBottom:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:rdv?12:0}}>
