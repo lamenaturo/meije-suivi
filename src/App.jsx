@@ -2217,6 +2217,25 @@ function Praticienne({ user, onLogout }) {
             </div>
           )}
 
+          {/* ── ONGLET COMPLÉMENTS ── */}
+          {activeTab==="complements"&&(
+            <div>
+              {clientData?.complements?.length>0?clientData.complements.map((c,i)=>{
+                const nom=typeof c==="string"?c:c.nom,lien=typeof c==="string"?"":c.lien,posologie=typeof c==="string"?"":c.posologie,codePromo=typeof c==="string"?"":c.codePromo;
+                const isEditing=typeof editingComplement==="object"&&editingComplement?.idx===i,edited=isEditing?editingComplement:null;
+                if(isEditing&&edited)return(<div key={i} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:12,padding:"14px 16px",marginBottom:8}}><div style={{display:"flex",flexDirection:"column",gap:8}}><input value={edited.nom} onChange={e=>setEditingComplement({...edited,nom:e.target.value})} placeholder="Nom" style={{...iP("p"),fontSize:13}}/><input value={edited.posologie} onChange={e=>setEditingComplement({...edited,posologie:e.target.value})} placeholder="Posologie" style={{...iP("p"),fontSize:13}}/><input value={edited.lien} onChange={e=>setEditingComplement({...edited,lien:e.target.value})} placeholder="Lien produit" style={{...iP("p"),fontSize:13}}/><input value={edited.codePromo} onChange={e=>setEditingComplement({...edited,codePromo:e.target.value})} placeholder="Code promo" style={{...iP("p"),fontSize:13}}/><div style={{display:"flex",gap:8}}><Btn onClick={()=>updateComplement(i,{nom:edited.nom,lien:edited.lien,posologie:edited.posologie,codePromo:edited.codePromo})} variant="primary" small>Enregistrer</Btn><Btn onClick={()=>setEditingComplement(null)} variant="ghost" theme="p" small>Annuler</Btn></div></div></div>);
+                return(<div key={i} style={{background:P.pSurface,borderRadius:10,padding:"12px 16px",marginBottom:8,border:`1px solid ${P.pBorder}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div style={{flex:1}}><p style={{color:P.pText,fontSize:14,fontWeight:500,marginBottom:posologie?4:0}}>{nom}</p>{posologie&&<p style={{color:P.pAccent,fontSize:12,marginBottom:4}}>💊 {posologie}</p>}<div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}}>{lien&&<a href={lien} target="_blank" rel="noreferrer" style={{color:P.pGreen,fontSize:12,textDecoration:"none"}}>→ Commander</a>}{codePromo&&<span style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:6,padding:"2px 8px",color:P.pAccent,fontSize:11,fontWeight:500}}>🏷 {codePromo}</span>}</div></div><div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8}}><button onClick={()=>setEditingComplement({idx:i,nom,lien:lien||"",posologie:posologie||"",codePromo:codePromo||""})} style={{background:"none",border:"none",color:P.pTextDim,fontSize:13,cursor:"pointer"}}>✏️</button><button onClick={()=>removeComplement(i)} style={{background:"none",border:"none",color:"#B5583A",fontSize:18,lineHeight:1,cursor:"pointer"}}>×</button></div></div></div>);
+              }):<EmptyState message="Aucun complément ajouté." theme="p"/>}
+              <div style={{marginTop:16,display:"flex",flexDirection:"column",gap:10}}>
+                <input value={newComplement.nom} onChange={e=>setNewComplement(f=>({...f,nom:e.target.value}))} placeholder="Nom du complément" style={iP("p")}/>
+                <input value={newComplement.posologie||""} onChange={e=>setNewComplement(f=>({...f,posologie:e.target.value}))} placeholder="Posologie" style={iP("p")}/>
+                <input value={newComplement.lien} onChange={e=>setNewComplement(f=>({...f,lien:e.target.value}))} placeholder="Lien produit (optionnel)" style={iP("p")}/>
+                <input value={newComplement.codePromo||""} onChange={e=>setNewComplement(f=>({...f,codePromo:e.target.value}))} placeholder="Code promo (optionnel)" style={iP("p")}/>
+                <Btn onClick={addComplement} disabled={savingComplements} variant="primary" style={{alignSelf:"flex-start"}}>Ajouter</Btn>
+              </div>
+            </div>
+          )}
+
           {/* ── ONGLET DOCUMENTS ── */}
           {activeTab==="documents"&&(
             <div>
