@@ -1933,18 +1933,19 @@ function Praticienne({ user, onLogout }) {
           </details>
 
           {/* ── ONGLET DOSSIER ── */}
-          {activeTab==="dossier"&&(
-            <div>
-              {/* Sous-navigation dossier */}
-              <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-                {[{key:"infos",icon:"📋",label:"Infos"},{key:"anamnese",icon:"📄",label:"Anamnèse"},{key:"documents",icon:"📁",label:"Documents"},{key:"complements",icon:"💊",label:"Compléments"}].map(({key,icon,label})=>(
-                  <button key={key} onClick={()=>setActiveTab(key)} style={{padding:"8px 16px",borderRadius:20,border:`1px solid ${P.pBorder}`,background:P.pSurface,color:P.pTextMid,fontFamily:P.sans,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,transition:"all 0.2s"}}>
-                    <span>{icon}</span>{label}
-                  </button>
-                ))}
-              </div>
-              <EmptyState message="Sélectionne une section ci-dessus pour accéder au dossier." theme="p"/>
+          {/* ── SOUS-NAV DOSSIER (visible sur toutes les sous-sections) ── */}
+          {["dossier","infos","anamnese","documents","complements"].includes(activeTab)&&(
+            <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+              {[{key:"infos",icon:"📋",label:"Infos"},{key:"anamnese",icon:"📄",label:"Anamnèse"},{key:"documents",icon:"📁",label:"Documents"},{key:"complements",icon:"💊",label:"Compléments"}].map(({key,icon,label})=>(
+                <button key={key} onClick={()=>setActiveTab(key)} style={{padding:"8px 16px",borderRadius:20,border:`1.5px solid ${activeTab===key?"rgba(200,133,108,0.5)":P.pBorder}`,background:activeTab===key?"rgba(200,133,108,0.1)":P.pSurface,color:activeTab===key?P.pAccent:P.pTextMid,fontFamily:P.sans,fontSize:12,fontWeight:activeTab===key?600:400,cursor:"pointer",display:"flex",alignItems:"center",gap:6,transition:"all 0.2s"}}>
+                  <span>{icon}</span>{label}
+                </button>
+              ))}
             </div>
+          )}
+
+          {activeTab==="dossier"&&(
+            <EmptyState message="Sélectionne une section ci-dessus pour accéder au dossier." theme="p"/>
           )}
 
           {/* ── ONGLET INFOS ── */}
