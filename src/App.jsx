@@ -17,6 +17,74 @@ const EMAILJS_PUBLIC = "zpxiv3rkIbtfdqAQ6";
 const fixPdfUrl = (url) => url;
 
 const PHASES_CYCLE = ["Menstruelle", "Folliculaire", "Ovulation", "Lutéale", "Je ne sais pas"];
+
+// ─── LISTES PRESCRIPTIONS ─────────────────────────────────────────────────────
+const COMPLEMENTS_LISTE = {
+  "Vitamines": [
+    "Vitamine D3","Vitamine D3+K2","Vitamine K2","Vitamine C","Vitamine A","Vitamine E",
+    "Vitamine B1","Vitamine B2","Vitamine B3 (niacine)","Vitamine B5","Vitamine B6",
+    "Vitamine B8 (biotine)","Vitamine B9 (méthylfolate)","Vitamine B12 (méthylcobalamine)","Complexe B",
+  ],
+  "Minéraux & oligoéléments": [
+    "Magnésium bisglycinate","Magnésium malate","Magnésium thréonate","Magnésium marin",
+    "Zinc","Fer bisglycinate","Fer fumarate","Iode","Sélénium","Chrome","Cuivre","Manganèse","Silicium",
+  ],
+  "Acides aminés & méthylation": [
+    "TMG (triméthylglycine)","Bétaïne HCl","Méthionine","Taurine","L-Carnitine","Glutamine",
+    "5-HTP","GABA","NAC (N-acétylcystéine)","Inositol / Myo-inositol","Phosphatidylsérine",
+  ],
+  "Acides gras": [
+    "Oméga-3 (EPA/DHA)","Huile d'onagre","Huile de bourrache",
+  ],
+  "Hormonal & thyroïde": [
+    "Tyrosine","Tyronat","Ashwagandha","Rhodiola","Maca","Gattilier (Vitex)",
+    "Dong quai","Safran","DHEA (précurseur)","Lithium orotate",
+  ],
+  "Digestif & microbiote": [
+    "Probiotiques","Prébiotiques","Enzymes digestives","Lactase","Charbon végétal",
+    "Curcumine","Berbérine",
+  ],
+  "Antioxydants & autres": [
+    "CoQ10","Quercétine","Resvératrol","Mélatonine","Spiruline","Chlorelle","Collagène",
+  ],
+};
+
+const EVICTIONS_LISTE = [
+  "Gluten","Lactose","Produits laitiers (tous)","Sucre raffiné","Alcool","Caféine",
+  "Histamine","Oxalates","Lectines","Solanacées (nightshades)","Soja","Œufs",
+  "Fruits de mer","Porc & charcuterie","Aliments ultra-transformés",
+  "Huiles végétales raffinées","Édulcorants",
+];
+
+const BILANS_LISTE = {
+  "Bilan de base": [
+    "NFS complète","Bilan hépatique (ASAT/ALAT)","Créatinine/urée","Bilan lipidique",
+    "Glycémie à jeun","Insuline à jeun","HbA1c","CRP us (inflammation)","VS (inflammation)",
+    "Acide urique","Homocystéine",
+  ],
+  "Fer & vitamines": [
+    "Bilan martial (fer, ferritine, transferrine)","Vitamine D (25-OH)",
+    "Vitamine B12","Folates","Zinc érythrocytaire","Magnésium érythrocytaire",
+    "Sélénium","Cuivre/Céruloplasmine","Iode urinaire",
+  ],
+  "Thyroïde": [
+    "TSH","T3 libre","T4 libre","Anticorps anti-TPO","Anticorps anti-TG",
+  ],
+  "Hormones sexuelles": [
+    "Estradiol (E2)","Progestérone","Testostérone totale","Testostérone libre",
+    "LH","FSH","Prolactine","SHBG","AMH","DHEA-S",
+  ],
+  "Surrénales & stress": [
+    "Cortisol matin","Cortisol soir (si disponible)",
+  ],
+  "Auto-immun & infections": [
+    "ANA (anticorps antinucléaires)","Facteur rhumatoïde",
+    "Charge virale EBV","Charge virale CMV",
+  ],
+  "Digestif": [
+    "Test SIBO (respiratoire)","Calprotectine fécale",
+  ],
+};
 const JOURS_SEMAINE = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
 const TI = [
@@ -197,6 +265,7 @@ const P = {
   cText: "#1E1208", cTextMid: "rgba(30,18,8,0.6)", cTextDim: "rgba(30,18,8,0.38)",
   cAccent: "#8A5A2A", cGreen: "#4A7A5A", cGreenDim: "rgba(74,122,90,0.15)", cGreenBorder: "rgba(74,122,90,0.3)",
   cTerra: "#B5583A", cTerraDim: "rgba(181,88,58,0.12)",
+  pTerra: "#B5583A",
   serif: "'Cormorant Garamond', Georgia, serif", sans: "'DM Sans', sans-serif",
   shadowRaised: "0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25)",
   shadowInner: "inset 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
@@ -489,7 +558,7 @@ function LandingPage({ onEnter }) {
       <div style={{ maxWidth:680, margin:"0 auto", padding:"32px 20px 0" }}>
         <div style={{ background:P.pAccentDim, border:`1px solid ${P.pAccentBorder}`, borderRadius:16, padding:"20px 24px", textAlign:"center" }}>
           <p style={{ color:P.pAccent, fontSize:13, fontWeight:500, marginBottom:6 }}>Tu n'as pas encore de compte ?</p>
-          <p style={{ color:P.pTextDim, fontSize:13, lineHeight:1.6, marginBottom:12 }}>Cet espace est réservé aux personnes accompagnées par Meije. Connectez-vous ou créez votre espace ci-dessous.</p>
+          <p style={{ color:P.pTextDim, fontSize:13, lineHeight:1.6, marginBottom:12 }}>Cet espace est réservé aux personnes accompagnées par Meije. Tu as réservé ta consultation ? Crée ton compte et tu seras prête pour notre premier rendez-vous.</p>
           <a href="https://meijenaturo.fr" target="_blank" rel="noreferrer" style={{ color:P.pAccent, fontSize:13, textDecoration:"none", fontWeight:500 }}>Prendre rendez-vous → meijenaturo.fr</a>
         </div>
       </div>
@@ -617,7 +686,7 @@ function Auth({ onLogin, onBack }) {
         )}
       </div>
       <div style={{ marginTop:20, textAlign:"center" }}>
-        
+        {tab==="register"&&!registerOk&&<p style={{ color:P.pTextDim, fontSize:12, marginBottom:8 }}>Tu pourras te connecter une fois que Meije aura pris en charge ton dossier.</p>}
         <p style={{ color:P.pTextDim, fontSize:11, marginTop:4 }}>
           Suivi confidentiel ·{" "}
           <button onClick={()=>setShowPrivacy(true)} style={{ background:"none", border:"none", color:P.pTextDim, fontSize:11, cursor:"pointer", fontFamily:P.sans, textDecoration:"underline" }}>Politique de confidentialité</button>
@@ -724,25 +793,8 @@ function BottomNav({ items, active, onChange, theme }) {
 
 // ─── SUIVI RDV — Questionnaire de suivi par consultation ─────────────────────
 // ─── PDF SUIVI RDV ────────────────────────────────────────────────────────────
-const downloadSuiviRdvPDF = async (rdv, prenom) => {
-  let jsPDF;
-  try { const mod = await import("jspdf"); jsPDF = mod.jsPDF || mod.default; }
-  catch { alert("Impossible de générer le PDF. Vérifiez que jsPDF est installé."); return; }
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pageW = 210, pageH = 297, marginL = 18, marginR = 18, contentW = pageW - marginL - marginR;
-  let y = 22;
-  const numRdvSafe = Number(rdv.numRdv) || rdv.numRdv;
+const downloadSuiviRdvPDF = (rdv, prenom) => {
   const date = new Date(rdv.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-  const prenomSafe = prenom || "Cliente";
-  // En-tête
-  pdf.setFontSize(20); pdf.setFont("helvetica", "bold"); pdf.setTextColor(181, 88, 58);
-  pdf.text("meije", marginL, y); pdf.setTextColor(138, 90, 42);
-  pdf.text(".naturo", marginL + pdf.getTextWidth("meije"), y); y += 7;
-  pdf.setFontSize(12); pdf.setFont("helvetica", "normal"); pdf.setTextColor(100, 70, 40);
-  pdf.text(`Suivi consultation ${numRdvSafe} — ${prenomSafe}`, marginL, y); y += 5;
-  pdf.setDrawColor(181, 88, 58); pdf.setLineWidth(0.5); pdf.line(marginL, y, pageW - marginR, y); y += 5;
-  pdf.setFontSize(9); pdf.setTextColor(140, 110, 80);
-  pdf.text(`Rempli le ${date}  •  Meije Delmonte — Naturopathe fonctionnelle`, marginL, y); y += 10;
   const rows = [
     ["Problématique principale", rdv.problematique],
     ["Évolution depuis la dernière consultation", rdv.evolution],
@@ -756,46 +808,48 @@ const downloadSuiviRdvPDF = async (rdv, prenom) => {
     ["Ce qui a changé positivement", rdv.positif],
     ["Commentaire pour Meije", rdv.commentaire],
   ].filter(([_, v]) => v && v.trim());
-  rows.forEach(([label, val]) => {
-    if (y > pageH - 25) { pdf.addPage(); y = 20; }
-    pdf.setFontSize(9); pdf.setFont("helvetica", "bold"); pdf.setTextColor(100, 70, 40);
-    pdf.text(label.toUpperCase(), marginL, y); y += 5;
-    pdf.setFont("helvetica", "normal"); pdf.setTextColor(40, 25, 12);
-    const lines = pdf.splitTextToSize(String(val), contentW);
-    lines.forEach(line => {
-      if (y > pageH - 20) { pdf.addPage(); y = 20; }
-      pdf.text(line, marginL, y); y += 5.5;
-    });
-    pdf.setDrawColor(200, 185, 170); pdf.setLineWidth(0.2);
-    pdf.line(marginL, y, pageW - marginR, y); y += 6;
-  });
-  const totalPages = pdf.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
-    pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
-    pdf.text(String(i), pageW - marginR, pageH - 8, { align: "right" });
-  }
-  pdf.save(`suivi_rdv${numRdvSafe}_${prenomSafe.toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Suivi RDV ${rdv.numRdv} — ${prenom}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1C1008; background: #fff; padding: 40px 48px; font-size: 12px; line-height: 1.7; }
+  .header { border-bottom: 2px solid #B5583A; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header h1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #B5583A; font-weight: 600; }
+  .header .meta { font-size: 11px; color: rgba(28,16,8,0.5); text-align: right; }
+  .row { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid rgba(28,16,8,0.08); }
+  .label { font-size: 11px; color: rgba(28,16,8,0.5); min-width: 220px; flex-shrink: 0; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
+  .val { font-size: 13px; color: #1C1008; line-height: 1.7; white-space: pre-wrap; }
+  @media print { body { padding: 20px 24px; } @page { margin: 1.5cm; size: A4; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Questionnaire de suivi — Consultation ${rdv.numRdv}</h1>
+    <p style="font-size:13px;color:rgba(28,16,8,0.6);margin-top:4px;">${prenom}</p>
+  </div>
+  <div class="meta">
+    <p>Meije Delmonte — Naturopathe fonctionnelle</p>
+    <p>Rempli le ${date}</p>
+  </div>
+</div>
+${rows.map(([label, val]) => `<div class="row"><span class="label">${label}</span><span class="val">${String(val).replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span></div>`).join("")}
+</body>
+</html>`;
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `suivi_rdv${rdv.numRdv}_${(prenom||"cliente").toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
 };
 
-
-const SuiviRdvOuiNon = ({ value, onChange }) => (
-  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-    {["Oui, toujours", "En partie", "Non, ça a évolué"].map(opt => (
-      <button key={opt} onClick={() => onChange(opt)} style={{ padding: "9px 16px", borderRadius: 20, border: `1.5px solid ${value === opt ? P.cGreen : P.cBorder}`, background: value === opt ? P.cGreenDim : "transparent", color: value === opt ? P.cGreen : P.cTextMid, fontFamily: P.sans, fontSize: 12, fontWeight: value === opt ? 600 : 400, cursor: "pointer" }}>{opt}</button>
-    ))}
-  </div>
-);
-const SuiviRdvField = ({ label, children }) => (
-  <div style={{ marginBottom: 20 }}>
-    <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>{label}</p>
-    {children}
-  </div>
-);
-const SuiviRdvTA = ({ value, onChange, placeholder, rows = 3 }) => (
-  <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
-    style={{ width: "100%", background: P.cSurface, border: `1px solid ${P.cBorder}`, borderRadius: 10, padding: "12px 14px", color: P.cText, fontFamily: P.sans, fontSize: 13, resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }} />
-);
 
 function SuiviRdv({ user, numRdv, existingData, onDone }) {
   const [form, setForm] = useState({
@@ -812,17 +866,38 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
     positif: existingData?.positif || "",
     commentaire: existingData?.commentaire || "",
   });
+  // Champs prescriptions personnalisés
+  const [observanceComplements, setObservanceComplements] = useState(existingData?.observanceComplements || "");
+  const [observanceEvictions, setObservanceEvictions] = useState(existingData?.observanceEvictions || "");
+  const [bilanFait, setBilanFait] = useState(existingData?.bilanFait || "");
+  const [bilanDetail, setBilanDetail] = useState(existingData?.bilanDetail || "");
+  const [reponsesProfilRdv, setReponsesProfilRdv] = useState(existingData?.reponsesProfilRdv || {});
+  const [dernieresPrescriptions, setDernieresPrescriptions] = useState(null);
+  const [profilsActifsClient, setProfilsActifsClient] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState("");
   const showToast = (msg) => setToast(msg);
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(""), 3200); return () => clearTimeout(t); } }, [toast]);
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { getDocs, query: q2, collection: col2, where: wh, orderBy: ob, limit: lim } = await import("firebase/firestore");
+        const snap = await getDocs(q2(col2(db,"prescriptions"),wh("clientUid","==",user.uid),ob("date","desc"),lim(1)));
+        if (!snap.empty) setDernieresPrescriptions(snap.docs[0].data());
+        const uSnap = await getDoc(doc(db,"users",user.uid));
+        setProfilsActifsClient(uSnap.data()?.profils || []);
+      } catch {}
+    };
+    load();
+  }, [user.uid]);
+
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
 
   const submit = async () => {
     setSaving(true);
-    const data = { ...form, userUid: user.uid, userEmail: user.email, userPrenom: user.prénom, numRdv, date: existingData?.date || new Date().toISOString() };
+    const data = { ...form, observanceComplements, observanceEvictions, bilanFait, bilanDetail, reponsesProfilRdv, userUid: user.uid, userEmail: user.email, userPrenom: user.prénom, numRdv, date: existingData?.date || new Date().toISOString() };
     try {
       if (existingData?.id) {
         await updateDoc(doc(db, "suivis_rdv", existingData.id), data);
@@ -839,13 +914,51 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
   };
 
   const downloadPDF = () => {
-    downloadSuiviRdvPDF({ ...form, numRdv, date: existingData?.date || new Date().toISOString() }, user.prénom);
+    downloadSuiviRdvPDF({ ...form, observanceComplements, observanceEvictions, bilanFait, bilanDetail, reponsesProfilRdv, numRdv, date: existingData?.date || new Date().toISOString() }, user.prénom);
   };
+
+  const Field = ({ label, children }) => (
+    <div style={{ marginBottom: 20 }}>
+      <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>{label}</p>
+      {children}
+    </div>
+  );
+  const TA = ({ value, onChange, placeholder, rows = 3 }) => (
+    <textarea value={value} onChange={onChange} placeholder={placeholder} rows={rows}
+      style={{ width: "100%", background: P.cSurface, border: `1px solid ${P.cBorder}`, borderRadius: 10, padding: "12px 14px", color: P.cText, fontFamily: P.sans, fontSize: 13, resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }} />
+  );
+  const OUI_NON = ({ value, onChange }) => (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {["Oui, toujours", "En partie", "Non, ça a évolué"].map(opt => (
+        <button key={opt} onClick={() => onChange(opt)} style={{ padding: "9px 16px", borderRadius: 20, border: `1.5px solid ${value === opt ? P.cGreen : P.cBorder}`, background: value === opt ? P.cGreenDim : "transparent", color: value === opt ? P.cGreen : P.cTextMid, fontFamily: P.sans, fontSize: 12, fontWeight: value === opt ? 600 : 400, cursor: "pointer" }}>{opt}</button>
+      ))}
+    </div>
+  );
+  const OUI_NON_SIMPLE = ({ value, onChange }) => (
+    <div style={{ display: "flex", gap: 8 }}>
+      {["Oui","Non","En cours"].map(opt => {
+        const cols = { Oui: P.cGreen, Non: P.cTerra, "En cours": "#B8A05A" };
+        const active = value === opt;
+        return <button key={opt} onClick={() => onChange(active ? "" : opt)} style={{ padding: "8px 16px", borderRadius: 20, border: `1.5px solid ${active ? cols[opt] : P.cBorder}`, background: active ? cols[opt]+"22" : "transparent", color: active ? cols[opt] : P.cTextMid, fontFamily: P.sans, fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt}</button>;
+      })}
+    </div>
+  );
+  const OBSERVANCE = ({ value, onChange }) => (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {["Régulièrement", "En partie", "Pas du tout"].map(opt => {
+        const cols = { Régulièrement: P.cGreen, "En partie": "#B8A05A", "Pas du tout": P.cTerra };
+        const active = value === opt;
+        return <button key={opt} onClick={() => onChange(active ? "" : opt)} style={{ padding: "8px 16px", borderRadius: 20, border: `1.5px solid ${active ? cols[opt] : P.cBorder}`, background: active ? cols[opt]+"22" : "transparent", color: active ? cols[opt] : P.cTextMid, fontFamily: P.sans, fontSize: 12, fontWeight: active ? 600 : 400, cursor: "pointer" }}>{opt}</button>;
+      })}
+    </div>
+  );
+
+  const questionsProfilActives = profilsActifsClient.flatMap(k => QUESTIONS_PROFIL[k] || []);
 
   return (
     <div style={{ minHeight: "100vh", background: P.cBg, paddingBottom: 80, fontFamily: P.sans }}>
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
-      <div style={{ background: P.cSurface, borderBottom: `1px solid ${P.cBorder}`, padding: "16px 20px" }}>
+      <div style={{ background: P.cSurface, borderBottom: `1px solid ${P.cBorder}`, padding: "16px 20px", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <p style={{ fontFamily: P.serif, fontSize: 20, color: P.cText, fontWeight: 300 }}>Consultation {numRdv}</p>
@@ -858,63 +971,122 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
       <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px" }} className="fade-in">
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 20 }}>
           <p style={{ color: P.cAccent, fontSize: 13, fontWeight: 500, marginBottom: 6 }}>📋 Questionnaire de suivi — Consultation {numRdv}</p>
-          <p style={{ color: P.cTextDim, fontSize: 12, lineHeight: 1.6 }}>Remplis ce questionnaire avant votre prochain rendez-vous. Il permet à Meije de préparer la consultation et d'évaluer votre progression.</p>
+          <p style={{ color: P.cTextDim, fontSize: 12, lineHeight: 1.6 }}>Remplissez ce questionnaire avant votre prochain rendez-vous. Il permet à Meije de préparer la consultation et d'évaluer votre progression.</p>
         </div>
 
         {/* Problématique */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
           <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>🎯 Problématique principale</p>
-          <SuiviRdvField label="Quelle est votre problématique principale en ce moment ?">
-            <SuiviRdvTA value={form.problematique} onChange={set("problematique")} placeholder="Décrivez votre problématique principale..." rows={3} />
-          </SuiviRdvField>
-          <SuiviRdvField label="Est-ce la même problématique qu'à la consultation précédente ?">
-            <SuiviRdvOuiNon value={form.memeProblematique} onChange={v => setForm(f => ({ ...f, memeProblematique: v }))} />
-          </SuiviRdvField>
-          <SuiviRdvField label="Comment a-t-elle évolué depuis notre dernière consultation ?">
-            <SuiviRdvTA value={form.evolution} onChange={set("evolution")} placeholder="Mieux, pareil, plus difficile ? Décrivez..." rows={3} />
-          </SuiviRdvField>
+          <Field label="Quelle est votre problématique principale en ce moment ?">
+            <TA value={form.problematique} onChange={set("problematique")} placeholder="Décrivez votre problématique principale..." rows={3} />
+          </Field>
+          <Field label="Est-ce la même problématique qu'à la consultation précédente ?">
+            <OUI_NON value={form.memeProblematique} onChange={v => setForm(f => ({ ...f, memeProblematique: v }))} />
+          </Field>
+          <Field label="Comment a-t-elle évolué depuis notre dernière consultation ?">
+            <TA value={form.evolution} onChange={set("evolution")} placeholder="Mieux, pareil, plus difficile ?" rows={3} />
+          </Field>
         </div>
 
         {/* Axes de suivi */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
           <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>🔍 Axes de suivi</p>
-          <SuiviRdvField label="🌙 Sommeil — Comment dormez-vous depuis la dernière consultation ?">
-            <SuiviRdvTA value={form.sommeil} onChange={set("sommeil")} placeholder="Endormissement, réveils, qualité, heures..." rows={2} />
-          </SuiviRdvField>
-          <SuiviRdvField label="🌿 Digestion — Comment est votre digestion ?">
-            <SuiviRdvTA value={form.digestion} onChange={set("digestion")} placeholder="Transit, ballonnements, douleurs, confort après repas..." rows={2} />
-          </SuiviRdvField>
-          <SuiviRdvField label="🌸 Cycle — Où en êtes-vous avec votre cycle ?">
-            <SuiviRdvTA value={form.cycle} onChange={set("cycle")} placeholder="Régularité, douleurs, SPM, phase actuelle..." rows={2} />
-          </SuiviRdvField>
-          <SuiviRdvField label="😮‍💨 Anxiété / Stress — Comment le gérez-vous ?">
-            <SuiviRdvTA value={form.anxiete} onChange={set("anxiete")} placeholder="Niveau de stress, ruminations, crises, gestion..." rows={2} />
-          </SuiviRdvField>
-          <SuiviRdvField label="🔎 Thyroïde — Avez-vous remarqué des changements ?">
-            <SuiviRdvTA value={form.thyroide} onChange={set("thyroide")} placeholder="Frilosité, fatigue matinale, cheveux, humeur, transit..." rows={2} />
-          </SuiviRdvField>
+          <Field label="🌙 Sommeil — Comment dormez-vous depuis la dernière consultation ?">
+            <TA value={form.sommeil} onChange={set("sommeil")} placeholder="Endormissement, réveils, qualité, heures..." rows={2} />
+          </Field>
+          <Field label="🌿 Digestion — Comment est votre digestion ?">
+            <TA value={form.digestion} onChange={set("digestion")} placeholder="Transit, ballonnements, douleurs, confort après repas..." rows={2} />
+          </Field>
+          <Field label="🌸 Cycle — Où en êtes-vous avec votre cycle ?">
+            <TA value={form.cycle} onChange={set("cycle")} placeholder="Régularité, douleurs, SPM, phase actuelle..." rows={2} />
+          </Field>
+          <Field label="😮‍💨 Anxiété / Stress — Comment le gérez-vous ?">
+            <TA value={form.anxiete} onChange={set("anxiete")} placeholder="Niveau de stress, ruminations, crises, gestion..." rows={2} />
+          </Field>
+          <Field label="🔎 Thyroïde — Avez-vous remarqué des changements ?">
+            <TA value={form.thyroide} onChange={set("thyroide")} placeholder="Frilosité, fatigue matinale, cheveux, humeur, transit..." rows={2} />
+          </Field>
         </div>
 
-        {/* Compléments et difficultés */}
+        {/* Suivi du protocole — personnalisé */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
-          <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>💊 Compléments & Difficultés</p>
-          <SuiviRdvField label="Avez-vous pris vos compléments régulièrement ?">
-            <SuiviRdvTA value={form.complements} onChange={set("complements")} placeholder="Lesquels pris, lesquels oubliés, réactions ressenties..." rows={2} />
-          </SuiviRdvField>
-          <SuiviRdvField label="Quelles difficultés avez-vous rencontrées ?">
-            <SuiviRdvTA value={form.difficultes} onChange={set("difficultes")} placeholder="Adhérence au protocole, contraintes, effets inattendus..." rows={2} />
-          </SuiviRdvField>
+          <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>💊 Suivi du protocole</p>
+
+          {dernieresPrescriptions?.complements?.length > 0 ? (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>Vos compléments alimentaires — avez-vous pu les prendre régulièrement ?</p>
+              <div style={{ background: P.cSurface2, borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
+                <p style={{ color: P.cTextDim, fontSize: 12, lineHeight: 1.7 }}>Prescrits : {dernieresPrescriptions.complements.join(" · ")}</p>
+              </div>
+              <OBSERVANCE value={observanceComplements} onChange={setObservanceComplements} />
+              {observanceComplements && observanceComplements !== "Régulièrement" && (
+                <div style={{ marginTop: 10 }}>
+                  <TA value={form.complements} onChange={set("complements")} placeholder="Lesquels oubliés ? Pourquoi ? Des réactions ressenties ?" rows={2} />
+                </div>
+              )}
+            </div>
+          ) : (
+            <Field label="Avez-vous pris vos compléments régulièrement ?">
+              <TA value={form.complements} onChange={set("complements")} placeholder="Lesquels pris, lesquels oubliés, réactions ressenties..." rows={2} />
+            </Field>
+          )}
+
+          {dernieresPrescriptions?.evictions?.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>Évictions alimentaires — avez-vous pu les respecter ?</p>
+              <div style={{ background: P.cSurface2, borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
+                <p style={{ color: P.cTextDim, fontSize: 12, lineHeight: 1.7 }}>À éviter : {dernieresPrescriptions.evictions.join(" · ")}</p>
+              </div>
+              <OBSERVANCE value={observanceEvictions} onChange={setObservanceEvictions} />
+            </div>
+          )}
+
+          {dernieresPrescriptions?.bilans?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ color: P.cText, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>Bilan sanguin — avez-vous pu le faire faire ?</p>
+              <div style={{ background: P.cSurface2, borderRadius: 10, padding: "10px 14px", marginBottom: 10 }}>
+                <p style={{ color: P.cTextDim, fontSize: 12, lineHeight: 1.7 }}>Attendu : {dernieresPrescriptions.bilans.join(" · ")}</p>
+              </div>
+              <OUI_NON_SIMPLE value={bilanFait} onChange={setBilanFait} />
+              {bilanFait === "Oui" && (
+                <div style={{ marginTop: 10 }}>
+                  <TA value={bilanDetail} onChange={e => setBilanDetail(e.target.value)} placeholder="Avez-vous les résultats ? Notez ce que vous savez ici, ou uploadez-les dans votre dossier." rows={2} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {dernieresPrescriptions?.autresPoints && (
+            <div style={{ marginBottom: 16, background: P.cSurface2, borderRadius: 10, padding: "12px 14px" }}>
+              <p style={{ color: P.cAccent, fontSize: 12, fontWeight: 500, marginBottom: 4 }}>📌 Point à vérifier ce cycle</p>
+              <p style={{ color: P.cText, fontSize: 13, lineHeight: 1.6 }}>{dernieresPrescriptions.autresPoints}</p>
+            </div>
+          )}
+
+          <Field label="Quelles difficultés avez-vous rencontrées avec le protocole ?">
+            <TA value={form.difficultes} onChange={set("difficultes")} placeholder="Adhérence, contraintes, effets inattendus..." rows={2} />
+          </Field>
         </div>
+
+        {/* Questions profil spécifiques */}
+        {questionsProfilActives.length > 0 && (
+          <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
+            <p style={{ color: P.cAccent, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>🎯 Suivi de vos symptômes</p>
+            {questionsProfilActives.map(q => (
+              <QuestionProfilItem key={q.key} q={q} value={reponsesProfilRdv[q.key]} onChange={v => setReponsesProfilRdv(prev => ({ ...prev, [q.key]: v }))} theme="c" />
+            ))}
+          </div>
+        )}
 
         {/* Positif + Commentaire */}
         <div style={{ background: P.cSurface, borderRadius: 16, border: `1px solid ${P.cBorder}`, padding: "20px", marginBottom: 16 }}>
           <p style={{ color: P.cGreen, fontSize: 11, textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: 16, fontWeight: 600 }}>✨ Bilan & Message</p>
-          <SuiviRdvField label="Qu'est-ce qui a changé positivement depuis la dernière consultation ?">
-            <SuiviRdvTA value={form.positif} onChange={set("positif")} placeholder="Même petites améliorations, notez-les !" rows={2} />
-          </SuiviRdvField>
-          <SuiviRdvField label="💬 Commentaire pour Meije">
-            <SuiviRdvTA value={form.commentaire} onChange={set("commentaire")} placeholder="Tout ce que vous souhaitez partager avec Meije avant le rendez-vous..." rows={3} />
-          </SuiviRdvField>
+          <Field label="Qu'est-ce qui a changé positivement depuis la dernière consultation ?">
+            <TA value={form.positif} onChange={set("positif")} placeholder="Même de petites améliorations, notez-les !" rows={2} />
+          </Field>
+          <Field label="💬 Commentaire pour Meije">
+            <TA value={form.commentaire} onChange={set("commentaire")} placeholder="Tout ce que vous souhaitez partager avec Meije avant le rendez-vous..." rows={3} />
+          </Field>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -978,8 +1150,8 @@ function Cliente({ user, onLogout }) {
       if(data?.complements)setComplements(data.complements);
       setUserProfil({profils:data?.profils||[],axesManuel:data?.axesManuel||[],axesExclus:data?.axesExclus||[],visioLink:data?.visioLink||""});
     });
-    const q7=query(collection(db,"suivis_rdv"),where("userUid","==",user.uid));
-    const u7=onSnapshot(q7,s=>setSuiviRdvList(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.numRdv)-Number(b.numRdv))));
+    const q7=query(collection(db,"suivis_rdv"),where("userUid","==",user.uid),orderBy("date","asc"));
+    const u7=onSnapshot(q7,s=>setSuiviRdvList(s.docs.map(d=>({id:d.id,...d.data()}))));
     return()=>{u();u2();u3();u4();u5();u6();u7();};
   },[user.uid]);
 
@@ -1028,7 +1200,7 @@ function Cliente({ user, onLogout }) {
 
   const submit=async()=>{
     const entryData = {
-      userUid:user.uid, userEmail:user.email, userPrénom:user.prénom, userPrenom:user.prénom||user.displayName||user.email?.split("@")[0]||"",
+      userUid:user.uid, userEmail:user.email, userPrénom:user.prénom,
       weekLabel:wk(), date:new Date().toISOString(),
       scores, notes, scoresProfi,
       cyclePhase, cycleNote, complementsPris,
@@ -1398,11 +1570,15 @@ function Praticienne({ user, onLogout }) {
   const [iaError,setIaError]=useState("");
   const [clearedActivity,setClearedActivity]=useState([]);
   const [suivisRdvClient,setSuivisRdvClient]=useState([]);
-  // Nouveau : réponse praticienne sur suivi
   const [reponseEnCours,setReponseEnCours]=useState({});
   const [savingReponse,setSavingReponse]=useState({});
-  // Onglet journal alimentaire
   const [journalEntryIdx,setJournalEntryIdx]=useState(0);
+  // Prescriptions structurées
+  const [prescriptions,setPrescriptions]=useState({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
+  const [savingPrescriptions,setSavingPrescriptions]=useState(false);
+  const [prescriptionsHistory,setPrescriptionsHistory]=useState([]);
+  // Sous-onglet Suivi
+  const [suiviSubTab,setSuiviSubTab]=useState("hebdo");
 
   const showToast=useCallback((msg)=>setToast(msg),[]);
   const getDefaultTitre=(prenom,nb)=>`Protocole n°${nb+1} — ${prenom}`;
@@ -1445,9 +1621,17 @@ function Praticienne({ user, onLogout }) {
     let u6=()=>{};
     try{const q6=query(collection(db,"notes_privees"),where("clientUid","==",c.uid),orderBy("date","desc"));u6=onSnapshot(q6,s=>setNoteHistory(s.docs.map(d=>({id:d.id,...d.data()}))||[]),()=>setNoteHistory([]));}catch{setNoteHistory([]);}
     setSuivisRdvClient([]);
-    const q8=query(collection(db,"suivis_rdv"),where("userUid","==",c.uid));
-    const u8=onSnapshot(q8,s=>setSuivisRdvClient(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.numRdv)-Number(b.numRdv))||[]),()=>setSuivisRdvClient([]));
-    window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6,u8];
+    const q8=query(collection(db,"suivis_rdv"),where("userUid","==",c.uid),orderBy("date","asc"));
+    const u8=onSnapshot(q8,s=>setSuivisRdvClient(s.docs.map(d=>({id:d.id,...d.data()}))||[]),()=>setSuivisRdvClient([]));
+    // Prescriptions structurées
+    const q9=query(collection(db,"prescriptions"),where("clientUid","==",c.uid),orderBy("date","desc"));
+    const u9=onSnapshot(q9,s=>{
+      const list=s.docs.map(d=>({id:d.id,...d.data()}))||[];
+      setPrescriptionsHistory(list);
+      if(list.length>0){const last=list[0];setPrescriptions({complements:last.complements||[],evictions:last.evictions||[],bilans:last.bilans||[],autresPoints:last.autresPoints||"",rdvNum:(last.rdvNum||1)+1});}
+      else setPrescriptions({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
+    },()=>setPrescriptionsHistory([]));
+    window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6,u8,u9];
     setPrivateNotes("");setMainView("fiche");
   },[]);
 
@@ -1455,6 +1639,17 @@ function Praticienne({ user, onLogout }) {
   const saveProtoPrat=async()=>{if(!protoPrat.trim()||!selected)return;setSavingProtoPrat(true);await setDoc(doc(db,"notes_privees",`proto_${selected.uid}`),{clientUid:selected.uid,type:"protocole_praticienne",text:protoPrat.trim(),date:new Date().toISOString()});setSavingProtoPrat(false);showToast("Protocole praticienne enregistré ✓");};
   const saveNote=async()=>{if(!privateNotes.trim())return;setSavingNote(true);await addDoc(collection(db,"notes_privees"),{clientUid:selected.uid,clientPrenom:selected.prenom,text:privateNotes.trim(),date:new Date().toISOString()});setPrivateNotes("");setSavingNote(false);showToast("Note enregistrée ✓");};
   const deleteNote=async(id)=>{await deleteDoc(doc(db,"notes_privees",id));};
+  const savePrescriptions=async()=>{
+    if(!selected)return;
+    setSavingPrescriptions(true);
+    await addDoc(collection(db,"prescriptions"),{
+      clientUid:selected.uid,clientPrenom:selected.prenom,
+      ...prescriptions,
+      date:new Date().toISOString(),
+    });
+    setSavingPrescriptions(false);
+    showToast("Prescriptions enregistrées ✓");
+  };
   const saveStatut=async(uid,statut)=>{await updateDoc(doc(db,"users",uid),{statut});};
   const deleteClient=async(c)=>{
     if(!window.confirm(`Supprimer le compte de ${c.prenom} ? Cette action supprime son dossier Firestore. Son compte Firebase Auth restera inactif.`))return;
@@ -1646,7 +1841,7 @@ function Praticienne({ user, onLogout }) {
                     {a.type==="anamnese"&&clientCible&&(()=>{
                       const anamClientData=a;
                       return(
-                        <button onClick={async(e)=>{e.stopPropagation();try{const q=query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid));const{getDocs}=await import("firebase/firestore");const snap=await getDocs(q);if(!snap.empty){const docs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>new Date(y.date)-new Date(x.date));downloadAnamnesePDF(docs[0],prenom);}else{showToast("Aucun questionnaire trouvé");}}catch(err){showToast("Erreur téléchargement");} }} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        <button onClick={async(e)=>{e.stopPropagation();try{const q=query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid),orderBy("date","desc"));const{getDocs}=await import("firebase/firestore");const snap=await getDocs(q);if(!snap.empty){const an={id:snap.docs[0].id,...snap.docs[0].data()};downloadAnamnesePDF(an,prenom);}}catch(err){showToast("Erreur téléchargement");} }} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
                           ⬇ PDF
                         </button>
                       );
@@ -1677,16 +1872,15 @@ function Praticienne({ user, onLogout }) {
           </div>
 
           {/* Onglets principaux */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}}>
             {[
-              {key:"infos",icon:"👤",label:"Infos"},
-              {key:"documents",icon:"📁",label:"Documents"},
-              {key:"suivis",icon:"📊",label:"Suivis"},
+              {key:"dossier",icon:"👤",label:"Dossier"},
+              {key:"protocole",icon:"🌿",label:"Protocole"},
+              {key:"suivi",icon:"📊",label:"Suivi"},
               {key:"message",icon:"💬",label:"Messages"},
               {key:"notes",icon:"🔒",label:"Notes"},
-              {key:"suivirdv",icon:"📅",label:"Suivis RDV"},
             ].map(({key,icon,label})=>{
-              const isActive=activeTab===key||(key==="documents"&&["anamnese","protocole","complements"].includes(activeTab));
+              const isActive=activeTab===key;
               return(
                 <button key={key} onClick={()=>setActiveTab(activeTab===key?null:key)} style={{background:isActive?"linear-gradient(160deg,rgba(200,133,108,0.2),rgba(200,133,108,0.08))":P.pSurface,border:`1px solid ${isActive?"rgba(200,133,108,0.4)":P.pBorder}`,borderRadius:18,padding:"18px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:8,cursor:"pointer",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:isActive?P.shadowAccent:P.shadowRaised}} className="card-raised-dark">
                   <span style={{fontSize:24}}>{icon}</span>
@@ -1695,16 +1889,6 @@ function Praticienne({ user, onLogout }) {
               );
             })}
           </div>
-
-          {activeTab==="documents"&&(
-            <div style={{display:"flex",gap:8,marginBottom:16}}>
-              {[{key:"anamnese",icon:"📋",label:"Anamnèse"},{key:"protocole",icon:"🌿",label:"Protocole"},{key:"complements",icon:"💊",label:"Compléments"}].map(({key,icon,label})=>(
-                <button key={key} onClick={()=>setActiveTab(activeTab===key?null:key)} style={{padding:"8px 16px",borderRadius:20,border:`1px solid ${P.pBorder}`,background:P.pSurface,color:P.pTextMid,fontFamily:P.sans,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,transition:"all 0.2s",boxShadow:P.shadowRaised}}>
-                  <span>{icon}</span>{label}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Résumé statut */}
           <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20,padding:"10px 14px",background:P.pSurface,borderRadius:12,border:`0.5px solid ${P.pBorder}`,boxShadow:P.shadowInner}}>
@@ -1741,6 +1925,21 @@ function Praticienne({ user, onLogout }) {
             </div>
           </details>
 
+          {/* ── ONGLET DOSSIER ── */}
+          {activeTab==="dossier"&&(
+            <div>
+              {/* Sous-navigation dossier */}
+              <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+                {[{key:"infos",icon:"📋",label:"Infos"},{key:"anamnese",icon:"📄",label:"Anamnèse"},{key:"documents",icon:"📁",label:"Documents"},{key:"complements",icon:"💊",label:"Compléments"}].map(({key,icon,label})=>(
+                  <button key={key} onClick={()=>setActiveTab(key)} style={{padding:"8px 16px",borderRadius:20,border:`1px solid ${P.pBorder}`,background:P.pSurface,color:P.pTextMid,fontFamily:P.sans,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,transition:"all 0.2s"}}>
+                    <span>{icon}</span>{label}
+                  </button>
+                ))}
+              </div>
+              <EmptyState message="Sélectionne une section ci-dessus pour accéder au dossier." theme="p"/>
+            </div>
+          )}
+
           {/* ── ONGLET INFOS ── */}
           {activeTab==="infos"&&(
             <div>
@@ -1763,128 +1962,205 @@ function Praticienne({ user, onLogout }) {
             </div>
           )}
 
-          {/* ── ONGLET SUIVIS ── avec commentaires + questions profil */}
-          {activeTab==="suivis"&&(
+          {/* ── ONGLET SUIVI ── deux sous-onglets */}
+          {activeTab==="suivi"&&(
             <div>
-              {entries.length===0?<EmptyState message={`${selected.prenom} n'a pas encore rempli de suivi.`} theme="p"/>
-                :[...entries].reverse().map(e=>{
-                  const vs=TI.map(i=>e.scores?.[i.key]).filter(Boolean),avg=vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null,sc=avg?SC.find(x=>x.v===Math.round(avg)):null;
-                  return(
-                    <div key={e.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"16px 18px",marginBottom:12}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                        <div><p style={{color:P.pText,fontWeight:500}}>{e.weekLabel}</p><p style={{color:P.pTextDim,fontSize:12}}>{new Date(e.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p></div>
-                        <ScoreDot value={avg?Math.round(avg):null} size={40}/>
-                      </div>
-                      {/* Compléments */}
-                      {e.complementsPris&&Object.keys(e.complementsPris).length>0&&(<div style={{marginBottom:10}}><p style={{color:P.pGreen,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>Compléments</p>{Object.entries(e.complementsPris).map(([comp,statut])=>{const colors={"Pris régulièrement":P.pGreen,"Pris irrégulièrement":"#B8A05A","Pas pris":"#B5583A"};return<div key={comp} style={{display:"flex",justifyContent:"space-between",padding:"6px 12px",background:P.pSurface2,borderRadius:8,marginBottom:4}}><span style={{color:P.pTextMid,fontSize:13}}>{comp}</span><span style={{color:colors[statut]||P.pTextDim,fontSize:12,fontWeight:500}}>{statut}</span></div>;})}</div>)}
-                      {/* Phase cycle */}
-                      {e.cyclePhase&&<div style={{background:P.pAccentDim,borderRadius:8,padding:"10px 14px",marginBottom:8}}><p style={{color:P.pAccent,fontSize:12,marginBottom:4}}>Phase : {e.cyclePhase}</p>{e.cycleNote&&<p style={{color:P.pTextMid,fontSize:13}}>{e.cycleNote}</p>}</div>}
-                      {/* Scores tronc commun */}
-                      {TI.filter(i=>e.scores?.[i.key]).map(i=>{const sc2=SC.find(x=>x.v===e.scores[i.key]);return<div key={i.key} style={{background:P.pSurface2,borderRadius:8,padding:"8px 12px",marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:e.notes?.[i.key]?4:0}}><span style={{color:P.pTextMid,fontSize:13}}>{i.icon} {i.label}</span><span style={{color:sc2?.color||P.pTextDim,fontSize:12,fontWeight:500}}>{sc2?.label}</span></div>{e.notes?.[i.key]&&<p style={{color:P.pTextDim,fontSize:12,fontStyle:"italic"}}>{e.notes[i.key]}</p>}</div>;})}
-                      {/* Scores profil spécifique */}
-                      {e.scoresProfi&&Object.keys(e.scoresProfi).length>0&&(
-                        <div style={{marginTop:8,marginBottom:8}}>
-                          <p style={{color:P.pGreen,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>🎯 Suivi spécifique</p>
-                          {Object.entries(e.scoresProfi).map(([key,val])=>{
-                            const q = Object.values(QUESTIONS_PROFIL).flat().find(q=>q.key===key);
-                            if(!q||!val) return null;
-                            const sc3 = typeof val === "number" ? SC.find(x=>x.v===val) : null;
-                            return<div key={key} style={{background:P.pSurface2,borderRadius:8,padding:"8px 12px",marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:P.pTextMid,fontSize:12}}>{q.icon} {q.label}</span><span style={{color:sc3?.color||P.pTextDim,fontSize:12,fontWeight:500}}>{sc3?.label||String(val)}</span></div></div>;
-                          })}
-                        </div>
-                      )}
-                      {/* Humeur */}
-                      {e.humeur_libre&&<div style={{background:P.pGreenDim,borderRadius:8,padding:"10px 14px",marginBottom:8}}><p style={{color:P.pGreen,fontSize:10,marginBottom:4}}>Humeur</p><p style={{color:P.pText,fontSize:13,lineHeight:1.6}}>{e.humeur_libre}</p></div>}
-                      {/* Confidences */}
-                      {e.confidences&&<div style={{background:P.pAccentDim,borderRadius:8,padding:"10px 14px",marginBottom:8}}><p style={{color:P.pAccent,fontSize:10,marginBottom:4}}>Ajout</p><p style={{color:P.pText,fontSize:13,lineHeight:1.6}}>{e.confidences}</p></div>}
-                      {/* Commentaire cliente + réponse */}
-                      {e.commentaireCliente&&(
-                        <div style={{background:"rgba(122,158,130,0.08)",border:`1px solid ${P.pGreen}33`,borderRadius:10,padding:"12px 14px",marginTop:10}}>
-                          <p style={{color:P.pGreen,fontSize:11,fontWeight:600,marginBottom:6}}>💬 Commentaire de {selected.prenom}</p>
-                          <p style={{color:P.pText,fontSize:13,lineHeight:1.6,marginBottom:10}}>{e.commentaireCliente}</p>
-                          {e.reponsePraticienne
-                            ? <div style={{background:P.pAccentDim,borderRadius:8,padding:"8px 12px"}}><p style={{color:P.pAccent,fontSize:11,marginBottom:4}}>Ta réponse</p><p style={{color:P.pText,fontSize:13}}>{e.reponsePraticienne}</p></div>
-                            : <div>
-                                <textarea value={reponseEnCours[e.id]||""} onChange={ev=>setReponseEnCours(p=>({...p,[e.id]:ev.target.value}))} placeholder="Répondre à ce commentaire…" rows={2} style={{...iP("p"),fontSize:12,resize:"vertical",marginBottom:8}}/>
-                                <Btn onClick={()=>envoyerReponse(e.id)} disabled={!reponseEnCours[e.id]?.trim()||savingReponse[e.id]} variant="sage" small>{savingReponse[e.id]?"Envoi…":"Répondre"}</Btn>
-                              </div>
-                          }
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-
-          {/* ── ONGLET JOURNAL ALIMENTAIRE ── */}
-          {activeTab==="suivis"&&entries.length>0&&(
-            <div style={{marginTop:24}}>
-              <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:12}}>🥗 Journal alimentaire</p>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
-                {[...entries].reverse().slice(0,8).map((e,i)=>(
-                  <button key={e.id} onClick={()=>setJournalEntryIdx(i)} style={{padding:"6px 12px",borderRadius:20,border:`1px solid ${journalEntryIdx===i?P.pAccentBorder:P.pBorder}`,background:journalEntryIdx===i?P.pAccentDim:"transparent",color:journalEntryIdx===i?P.pAccent:P.pTextMid,fontSize:11,fontFamily:P.sans}}>
-                    {e.weekLabel||new Date(e.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}
+              {/* Sous-onglets */}
+              <div style={{display:"flex",gap:8,marginBottom:16}}>
+                {[{key:"hebdo",label:"📝 Suivi hebdomadaire"},{key:"rdv",label:"📅 Consultations RDV"}].map(({key,label})=>(
+                  <button key={key} onClick={()=>setSuiviSubTab(key)} style={{padding:"9px 18px",borderRadius:20,border:`1.5px solid ${suiviSubTab===key?"rgba(200,133,108,0.5)":P.pBorder}`,background:suiviSubTab===key?"rgba(200,133,108,0.12)":P.pSurface,color:suiviSubTab===key?P.pAccent:P.pTextMid,fontFamily:P.sans,fontSize:12,fontWeight:suiviSubTab===key?600:400,cursor:"pointer",transition:"all 0.2s"}}>
+                    {label}
                   </button>
                 ))}
               </div>
-              {(()=>{
-                const e = [...entries].reverse()[journalEntryIdx];
-                if(!e?.journalAlimentaire) return <EmptyState message="Pas de journal alimentaire pour cette semaine." theme="p"/>;
-                return(
-                  <div style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,overflow:"hidden"}}>
-                    {JOURS_SEMAINE.map(jour=>{
-                      const repas = e.journalAlimentaire[jour];
-                      const hasData = repas?.some(r=>r.texte||r.heure);
+
+              {/* Sous-onglet Hebdomadaire */}
+              {suiviSubTab==="hebdo"&&(
+                <div>
+                  {entries.length===0?<EmptyState message={`${selected.prenom} n'a pas encore rempli de suivi.`} theme="p"/>
+                    :[...entries].reverse().map(e=>{
+                      const vs=TI.map(i=>e.scores?.[i.key]).filter(Boolean),avg=vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null,sc=avg?SC.find(x=>x.v===Math.round(avg)):null;
                       return(
-                        <div key={jour} style={{borderBottom:`1px solid ${P.pBorder}`,padding:"12px 16px"}}>
-                          <p style={{color:hasData?P.pText:P.pTextDim,fontSize:13,fontWeight:hasData?500:400,marginBottom:hasData?8:0}}>{jour}</p>
-                          {hasData&&repas.map((r,i)=>(
-                            r.texte&&<div key={i} style={{display:"flex",gap:10,marginBottom:4,alignItems:"flex-start"}}>
-                              <span style={{color:P.pAccent,fontSize:11,fontWeight:600,minWidth:40,flexShrink:0}}>{r.heure||r.repas}</span>
-                              <p style={{color:P.pTextMid,fontSize:12,lineHeight:1.5}}>{r.texte}</p>
+                        <div key={e.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"16px 18px",marginBottom:12}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                            <div><p style={{color:P.pText,fontWeight:500}}>{e.weekLabel}</p><p style={{color:P.pTextDim,fontSize:12}}>{new Date(e.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p></div>
+                            <ScoreDot value={avg?Math.round(avg):null} size={40}/>
+                          </div>
+                          {e.complementsPris&&Object.keys(e.complementsPris).length>0&&(<div style={{marginBottom:10}}><p style={{color:P.pGreen,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>Compléments</p>{Object.entries(e.complementsPris).map(([comp,statut])=>{const colors={"Pris régulièrement":P.pGreen,"Pris irrégulièrement":"#B8A05A","Pas pris":"#B5583A"};return<div key={comp} style={{display:"flex",justifyContent:"space-between",padding:"6px 12px",background:P.pSurface2,borderRadius:8,marginBottom:4}}><span style={{color:P.pTextMid,fontSize:13}}>{comp}</span><span style={{color:colors[statut]||P.pTextDim,fontSize:12,fontWeight:500}}>{statut}</span></div>;})}</div>)}
+                          {e.cyclePhase&&<div style={{background:P.pAccentDim,borderRadius:8,padding:"10px 14px",marginBottom:8}}><p style={{color:P.pAccent,fontSize:12,marginBottom:4}}>Phase : {e.cyclePhase}</p>{e.cycleNote&&<p style={{color:P.pTextMid,fontSize:13}}>{e.cycleNote}</p>}</div>}
+                          {TI.filter(i=>e.scores?.[i.key]).map(i=>{const sc2=SC.find(x=>x.v===e.scores[i.key]);return<div key={i.key} style={{background:P.pSurface2,borderRadius:8,padding:"8px 12px",marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:e.notes?.[i.key]?4:0}}><span style={{color:P.pTextMid,fontSize:13}}>{i.icon} {i.label}</span><span style={{color:sc2?.color||P.pTextDim,fontSize:12,fontWeight:500}}>{sc2?.label}</span></div>{e.notes?.[i.key]&&<p style={{color:P.pTextDim,fontSize:12,fontStyle:"italic"}}>{e.notes[i.key]}</p>}</div>;})}
+                          {e.scoresProfi&&Object.keys(e.scoresProfi).length>0&&(
+                            <div style={{marginTop:8,marginBottom:8}}>
+                              <p style={{color:P.pGreen,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>🎯 Suivi spécifique</p>
+                              {Object.entries(e.scoresProfi).map(([key,val])=>{
+                                const q=Object.values(QUESTIONS_PROFIL).flat().find(q=>q.key===key);
+                                if(!q||!val)return null;
+                                const sc3=typeof val==="number"?SC.find(x=>x.v===val):null;
+                                return<div key={key} style={{background:P.pSurface2,borderRadius:8,padding:"8px 12px",marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:P.pTextMid,fontSize:12}}>{q.icon} {q.label}</span><span style={{color:sc3?.color||P.pTextDim,fontSize:12,fontWeight:500}}>{sc3?.label||String(val)}</span></div></div>;
+                              })}
                             </div>
-                          ))}
+                          )}
+                          {e.humeur_libre&&<div style={{background:P.pGreenDim,borderRadius:8,padding:"10px 14px",marginBottom:8}}><p style={{color:P.pGreen,fontSize:10,marginBottom:4}}>Humeur</p><p style={{color:P.pText,fontSize:13,lineHeight:1.6}}>{e.humeur_libre}</p></div>}
+                          {e.confidences&&<div style={{background:P.pAccentDim,borderRadius:8,padding:"10px 14px",marginBottom:8}}><p style={{color:P.pAccent,fontSize:10,marginBottom:4}}>Ajout</p><p style={{color:P.pText,fontSize:13,lineHeight:1.6}}>{e.confidences}</p></div>}
+                          {e.commentaireCliente&&(
+                            <div style={{background:"rgba(122,158,130,0.08)",border:`1px solid ${P.pGreen}33`,borderRadius:10,padding:"12px 14px",marginTop:10}}>
+                              <p style={{color:P.pGreen,fontSize:11,fontWeight:600,marginBottom:6}}>💬 Commentaire de {selected.prenom}</p>
+                              <p style={{color:P.pText,fontSize:13,lineHeight:1.6,marginBottom:10}}>{e.commentaireCliente}</p>
+                              {e.reponsePraticienne
+                                ?<div style={{background:P.pAccentDim,borderRadius:8,padding:"10px 12px"}}><p style={{color:P.pAccent,fontSize:11,marginBottom:4}}>Ta réponse · {new Date(e.reponseDate).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><p style={{color:P.pText,fontSize:13,lineHeight:1.6}}>{e.reponsePraticienne}</p></div>
+                                :<div><textarea value={reponseEnCours[e.id]||""} onChange={ev=>setReponseEnCours(p=>({...p,[e.id]:ev.target.value}))} placeholder="Répondre à ce commentaire…" rows={2} style={{...iP("p"),resize:"vertical",marginBottom:8,fontSize:13}}/><Btn onClick={()=>envoyerReponse(e.id)} disabled={savingReponse[e.id]||!reponseEnCours[e.id]?.trim()} variant="primary" small>{savingReponse[e.id]?"Envoi…":"Répondre"}</Btn></div>}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
+                </div>
+              )}
 
-          {/* ── ONGLET ÉVOLUTION ── */}
-          {activeTab==="evolution"&&(
-            <div>
-              {entries.length<2?<EmptyState message={`${selected.prenom} n'a pas encore assez de suivis.`} theme="p"/>:(
-                <>{(()=>{const getAvg=e=>{const vs=TI.map(i=>e.scores?.[i.key]).filter(Boolean);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null;};const avgFirst=getAvg(entries[0]),avgLast=getAvg(entries[entries.length-1]),diff=avgFirst&&avgLast?(avgLast-avgFirst).toFixed(1):null;return diff?(<div style={{background:diff>0?P.pGreenDim:P.pAccentDim,border:`1px solid ${diff>0?"rgba(122,158,130,0.3)":P.pAccentBorder}`,borderRadius:12,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:24}}>{diff>0?"📈":"📉"}</span><div><p style={{color:diff>0?P.pGreen:P.pAccent,fontWeight:500,fontSize:14}}>{diff>0?`+${diff} pts depuis le début`:`${diff} pts depuis le début`}</p><p style={{color:P.pTextDim,fontSize:12,marginTop:2}}>{entries.length} semaines · moy. {avgFirst?.toFixed(1)} → {avgLast?.toFixed(1)}</p></div></div>):null;})()}<ChartSelector entries={entries} theme="p"/></>
+              {/* Sous-onglet Consultations RDV */}
+              {suiviSubTab==="rdv"&&(
+                <div>
+                  <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:14}}>Questionnaires de suivi par consultation</p>
+                  {[1,2,3,4,5,6].map(n=>{
+                    const rdv=suivisRdvClient?.find(s=>s.numRdv===n);
+                    return(
+                      <div key={n} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${rdv?P.pGreen+"44":P.pBorder}`,padding:"16px 18px",marginBottom:10}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:rdv?12:0}}>
+                          <div style={{display:"flex",alignItems:"center",gap:10}}>
+                            <span style={{fontSize:16}}>{rdv?"✅":"⬜"}</span>
+                            <p style={{color:rdv?P.pText:P.pTextDim,fontWeight:rdv?500:400,fontSize:14}}>Consultation {n}</p>
+                          </div>
+                          {rdv&&(
+                            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                              <p style={{color:P.pTextDim,fontSize:11}}>{new Date(rdv.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+                              <button onClick={()=>downloadSuiviRdvPDF(rdv,selected.prenom)} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer"}}>⬇ PDF</button>
+                            </div>
+                          )}
+                        </div>
+                        {rdv&&(
+                          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                            {[
+                              ["Problématique",rdv.problematique],["Évolution",rdv.evolution],
+                              ["Sommeil",rdv.sommeil],["Digestion",rdv.digestion],["Cycle",rdv.cycle],
+                              ["Anxiété / Stress",rdv.anxiete],["Thyroïde",rdv.thyroide],
+                              ["Compléments pris",rdv.complements],["Difficultés",rdv.difficultes],
+                              ["Ce qui a changé positivement",rdv.positif],
+                              // Questions prescriptions personnalisées
+                              ["Observance compléments prescrits",rdv.observanceComplements],
+                              ["Évictions alimentaires",rdv.observanceEvictions],
+                              ["Bilan sanguin fait",rdv.bilanFait],
+                              ["Détail bilan",rdv.bilanDetail],
+                              ["Commentaire",rdv.commentaire],
+                            ].filter(([_,v])=>v&&v.trim&&v.trim()).map(([label,val])=>(
+                              <div key={label} style={{display:"flex",gap:10,background:P.pSurface2,borderRadius:8,padding:"8px 12px"}}>
+                                <span style={{color:P.pTextDim,fontSize:12,minWidth:200,flexShrink:0}}>{label}</span>
+                                <span style={{color:P.pTextMid,fontSize:13,lineHeight:1.5}}>{val}</span>
+                              </div>
+                            ))}
+                            {/* Questions profil spécifiques */}
+                            {rdv.reponsesProfilRdv&&Object.keys(rdv.reponsesProfilRdv).length>0&&(
+                              <div style={{marginTop:8}}>
+                                <p style={{color:P.pGreen,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>🎯 Suivi spécifique</p>
+                                {Object.entries(rdv.reponsesProfilRdv).map(([key,val])=>{
+                                  const q=Object.values(QUESTIONS_PROFIL).flat().find(q=>q.key===key);
+                                  if(!q||!val)return null;
+                                  const sc=typeof val==="number"?SC.find(x=>x.v===val):null;
+                                  return<div key={key} style={{display:"flex",gap:10,background:P.pSurface2,borderRadius:8,padding:"8px 12px",marginBottom:4}}><span style={{color:P.pTextDim,fontSize:12,minWidth:200,flexShrink:0}}>{q.icon} {q.label}</span><span style={{color:sc?.color||P.pTextMid,fontSize:13}}>{sc?.label||String(val)}</span></div>;
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
-
-          {/* ── ONGLET COMPLÉMENTS ── */}
-          {activeTab==="complements"&&(
-            <div>
-              {clientData?.complements?.length>0?clientData.complements.map((c,i)=>{
-                const nom=typeof c==="string"?c:c.nom,lien=typeof c==="string"?"":c.lien,posologie=typeof c==="string"?"":c.posologie,codePromo=typeof c==="string"?"":c.codePromo;
-                const isEditing=typeof editingComplement==="object"&&editingComplement?.idx===i,edited=isEditing?editingComplement:null;
-                if(isEditing&&edited)return(<div key={i} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:12,padding:"14px 16px",marginBottom:8}}><div style={{display:"flex",flexDirection:"column",gap:8}}><input value={edited.nom} onChange={e=>setEditingComplement({...edited,nom:e.target.value})} placeholder="Nom" style={{...iP("p"),fontSize:13}}/><input value={edited.posologie} onChange={e=>setEditingComplement({...edited,posologie:e.target.value})} placeholder="Posologie" style={{...iP("p"),fontSize:13}}/><input value={edited.lien} onChange={e=>setEditingComplement({...edited,lien:e.target.value})} placeholder="Lien produit" style={{...iP("p"),fontSize:13}}/><input value={edited.codePromo} onChange={e=>setEditingComplement({...edited,codePromo:e.target.value})} placeholder="Code promo" style={{...iP("p"),fontSize:13}}/><div style={{display:"flex",gap:8}}><Btn onClick={()=>updateComplement(i,{nom:edited.nom,lien:edited.lien,posologie:edited.posologie,codePromo:edited.codePromo})} variant="primary" small>Enregistrer</Btn><Btn onClick={()=>setEditingComplement(null)} variant="ghost" theme="p" small>Annuler</Btn></div></div></div>);
-                return(<div key={i} style={{background:P.pSurface,borderRadius:10,padding:"12px 16px",marginBottom:8,border:`1px solid ${P.pBorder}`}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div style={{flex:1}}><p style={{color:P.pText,fontSize:14,fontWeight:500,marginBottom:posologie?4:0}}>{nom}</p>{posologie&&<p style={{color:P.pAccent,fontSize:12,marginBottom:4}}>💊 {posologie}</p>}<div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}}>{lien&&<a href={lien} target="_blank" rel="noreferrer" style={{color:P.pGreen,fontSize:12,textDecoration:"none"}}>→ Commander</a>}{codePromo&&<span style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:6,padding:"2px 8px",color:P.pAccent,fontSize:11,fontWeight:500}}>🏷 {codePromo}</span>}</div></div><div style={{display:"flex",gap:6,flexShrink:0,marginLeft:8}}><button onClick={()=>setEditingComplement({idx:i,nom,lien:lien||"",posologie:posologie||"",codePromo:codePromo||""})} style={{background:"none",border:"none",color:P.pTextDim,fontSize:13,cursor:"pointer"}}>✏️</button><button onClick={()=>removeComplement(i)} style={{background:"none",border:"none",color:"#B5583A",fontSize:18,lineHeight:1,cursor:"pointer"}}>×</button></div></div></div>);
-              }):<EmptyState message="Aucun complément ajouté." theme="p"/>}
-              <div style={{marginTop:16,display:"flex",flexDirection:"column",gap:10}}>
-                <input value={newComplement.nom} onChange={e=>setNewComplement(f=>({...f,nom:e.target.value}))} placeholder="Nom du complément" style={iP("p")}/>
-                <input value={newComplement.posologie||""} onChange={e=>setNewComplement(f=>({...f,posologie:e.target.value}))} placeholder="Posologie" style={iP("p")}/>
-                <input value={newComplement.lien} onChange={e=>setNewComplement(f=>({...f,lien:e.target.value}))} placeholder="Lien produit (optionnel)" style={iP("p")}/>
-                <input value={newComplement.codePromo||""} onChange={e=>setNewComplement(f=>({...f,codePromo:e.target.value}))} placeholder="Code promo (optionnel)" style={iP("p")}/>
-                <Btn onClick={addComplement} disabled={savingComplements} variant="primary" style={{alignSelf:"flex-start"}}>Ajouter</Btn>
-              </div>
-            </div>
-          )}
-
           {/* ── ONGLET PROTOCOLE ── */}
           {activeTab==="protocole"&&(
             <div>
+              {/* Section prescriptions structurées */}
+              <div style={{background:P.pSurface,borderRadius:14,border:`1px solid ${P.pBorder}`,padding:"18px 20px",marginBottom:20}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <p style={{color:P.pAccent,fontSize:13,fontWeight:500}}>📋 Prescriptions — RDV {prescriptions.rdvNum}</p>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <input type="number" value={prescriptions.rdvNum} min={1} max={6} onChange={e=>setPrescriptions(p=>({...p,rdvNum:parseInt(e.target.value)||1}))} style={{...iP("p"),width:64,padding:"6px 10px",fontSize:13,textAlign:"center"}}/>
+                    <Btn onClick={savePrescriptions} disabled={savingPrescriptions} variant="primary" small>{savingPrescriptions?"Enregistrement…":"Enregistrer"}</Btn>
+                  </div>
+                </div>
+
+                {/* Compléments prescrits */}
+                <div style={{marginBottom:20}}>
+                  <p style={{color:P.pTextMid,fontSize:12,fontWeight:600,marginBottom:10}}>💊 Compléments prescrits</p>
+                  {Object.entries(COMPLEMENTS_LISTE).map(([groupe,items])=>(
+                    <div key={groupe} style={{marginBottom:12}}>
+                      <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>{groupe}</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                        {items.map(item=>{
+                          const active=prescriptions.complements.includes(item);
+                          return<button key={item} onClick={()=>setPrescriptions(p=>({...p,complements:active?p.complements.filter(c=>c!==item):[...p.complements,item]}))} style={{padding:"5px 11px",borderRadius:20,cursor:"pointer",border:`1.5px solid ${active?P.pGreen:P.pBorder}`,background:active?P.pGreenDim:"transparent",color:active?P.pGreen:P.pTextMid,fontFamily:P.sans,fontSize:11,fontWeight:active?500:400,transition:"all 0.15s"}}>{active?"✓ ":""}{item}</button>;
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Évictions alimentaires */}
+                <div style={{marginBottom:20}}>
+                  <p style={{color:P.pTextMid,fontSize:12,fontWeight:600,marginBottom:10}}>🚫 Évictions alimentaires</p>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                    {EVICTIONS_LISTE.map(item=>{
+                      const active=prescriptions.evictions.includes(item);
+                      return<button key={item} onClick={()=>setPrescriptions(p=>({...p,evictions:active?p.evictions.filter(e=>e!==item):[...p.evictions,item]}))} style={{padding:"5px 11px",borderRadius:20,cursor:"pointer",border:`1.5px solid ${active?"#B5583A":P.pBorder}`,background:active?"rgba(181,88,58,0.12)":"transparent",color:active?"#B5583A":P.pTextMid,fontFamily:P.sans,fontSize:11,fontWeight:active?500:400,transition:"all 0.15s"}}>{active?"✓ ":""}{item}</button>;
+                    })}
+                  </div>
+                </div>
+
+                {/* Bilans attendus */}
+                <div style={{marginBottom:20}}>
+                  <p style={{color:P.pTextMid,fontSize:12,fontWeight:600,marginBottom:10}}>🔬 Bilans sanguins attendus</p>
+                  {Object.entries(BILANS_LISTE).map(([groupe,items])=>(
+                    <div key={groupe} style={{marginBottom:12}}>
+                      <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:6}}>{groupe}</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                        {items.map(item=>{
+                          const active=prescriptions.bilans.includes(item);
+                          return<button key={item} onClick={()=>setPrescriptions(p=>({...p,bilans:active?p.bilans.filter(b=>b!==item):[...p.bilans,item]}))} style={{padding:"5px 11px",borderRadius:20,cursor:"pointer",border:`1.5px solid ${active?"#7A9E82":P.pBorder}`,background:active?"rgba(122,158,130,0.12)":"transparent",color:active?"#7A9E82":P.pTextMid,fontFamily:P.sans,fontSize:11,fontWeight:active?500:400,transition:"all 0.15s"}}>{active?"✓ ":""}{item}</button>;
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Autres points */}
+                <div>
+                  <p style={{color:P.pTextMid,fontSize:12,fontWeight:600,marginBottom:6}}>📝 Autres points à vérifier au prochain RDV</p>
+                  <textarea value={prescriptions.autresPoints} onChange={e=>setPrescriptions(p=>({...p,autresPoints:e.target.value}))} placeholder="Ex : vérifier si le stress a diminué, si les douleurs J1 ont évolué…" rows={3} style={{...iP("p"),resize:"vertical",fontSize:13}}/>
+                </div>
+              </div>
+
+              {/* Historique prescriptions */}
+              {prescriptionsHistory.length>0&&(
+                <div style={{marginBottom:20}}>
+                  <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:10}}>Historique des prescriptions</p>
+                  {prescriptionsHistory.map(pr=>(
+                    <div key={pr.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"14px 16px",marginBottom:8}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                        <p style={{color:P.pAccent,fontSize:13,fontWeight:500}}>RDV {pr.rdvNum}</p>
+                        <p style={{color:P.pTextDim,fontSize:11}}>{new Date(pr.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+                      </div>
+                      {pr.complements?.length>0&&<p style={{color:P.pGreen,fontSize:12,marginBottom:4}}>💊 {pr.complements.join(" · ")}</p>}
+                      {pr.evictions?.length>0&&<p style={{color:"#B5583A",fontSize:12,marginBottom:4}}>🚫 {pr.evictions.join(" · ")}</p>}
+                      {pr.bilans?.length>0&&<p style={{color:"#7A9E82",fontSize:12,marginBottom:4}}>🔬 {pr.bilans.join(" · ")}</p>}
+                      {pr.autresPoints&&<p style={{color:P.pTextMid,fontSize:12,fontStyle:"italic",marginTop:4}}>{pr.autresPoints}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Protocoles envoyés */}
               <div style={{background:"rgba(200,133,108,0.08)",border:"1px solid rgba(200,133,108,0.25)",borderRadius:14,padding:"18px 20px",marginBottom:20}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
                   <div>
@@ -1902,7 +2178,7 @@ function Praticienne({ user, onLogout }) {
                 {iaError&&<div style={{marginTop:12,background:"rgba(181,88,58,0.1)",border:"1px solid rgba(181,88,58,0.3)",borderRadius:10,padding:"10px 14px"}}><p style={{color:"#B5583A",fontSize:13}}>{iaError}</p></div>}
                 {!iaLoading&&newProtocole.contenu&&newProtocole.contenu!==getDefaultMessage(selected.prenom)&&(<div style={{marginTop:12,background:"rgba(122,158,130,0.1)",border:"1px solid rgba(122,158,130,0.25)",borderRadius:10,padding:"10px 14px"}}><p style={{color:P.pGreen,fontSize:12}}>✓ Protocoles générés — Le protocole praticienne est dans les Notes privées. Relis et ajuste avant d'envoyer 🌿</p></div>)}
               </div>
-              {protocoles.length>0&&(<div style={{marginBottom:20}}>{[...protocoles].reverse().map(p=>(<div key={p.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"16px 18px",marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><p style={{color:P.pAccent,fontFamily:P.serif,fontSize:17,fontWeight:400}}>{p.titre}</p><div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:P.pTextDim,fontSize:11}}>{new Date(p.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</span><button onClick={()=>deleteProtocole(p.id)} style={{background:"none",border:"none",color:"#B5583A",fontSize:18,cursor:"pointer"}}>×</button></div></div><p style={{color:P.pTextMid,fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{p.contenu}</p>{p.fichiers?.length>0&&<div style={{marginTop:10,display:"flex",flexWrap:"wrap",gap:8}}>{p.fichiers.map((f,i)=><FileTag key={i} name={f.name} url={f.url} theme="p"/>)}</div>}</div>))}</div>)}
+              {protocoles.length>0&&(<div style={{marginBottom:20}}><p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:10}}>Protocoles envoyés</p>{[...protocoles].reverse().map(p=>(<div key={p.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"16px 18px",marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><p style={{color:P.pAccent,fontFamily:P.serif,fontSize:17,fontWeight:400}}>{p.titre}</p><div style={{display:"flex",alignItems:"center",gap:10}}><span style={{color:P.pTextDim,fontSize:11}}>{new Date(p.date).toLocaleDateString("fr-FR",{day:"numeric",month:"short"})}</span><button onClick={()=>deleteProtocole(p.id)} style={{background:"none",border:"none",color:"#B5583A",fontSize:18,cursor:"pointer"}}>×</button></div></div><p style={{color:P.pTextMid,fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{p.contenu}</p>{p.fichiers?.length>0&&<div style={{marginTop:10,display:"flex",flexWrap:"wrap",gap:8}}>{p.fichiers.map((f,i)=><FileTag key={i} name={f.name} url={f.url} theme="p"/>)}</div>}</div>))}</div>)}
               <div style={{background:P.pSurface,borderRadius:14,border:`1px solid ${P.pBorder}`,padding:"18px 20px"}}>
                 <p style={{color:P.pAccent,fontSize:13,fontWeight:500,marginBottom:14}}>{newProtocole.contenu&&newProtocole.contenu!==getDefaultMessage(selected.prenom)?"✏️ Relire et envoyer":"Nouveau protocole"}</p>
                 <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -1917,6 +2193,13 @@ function Praticienne({ user, onLogout }) {
                   {protocoleFiles.map((f,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8}}><FileTag name={f.name} url={f.url} theme="p"/><button onClick={()=>setProtocoleFiles(prev=>prev.filter((_,idx)=>idx!==i))} style={{background:"none",border:"none",color:"#B5583A",fontSize:14,cursor:"pointer"}}>×</button></div>)}
                   <Btn onClick={sendProtocole} disabled={sendingProtocole||!newProtocole.titre.trim()} variant="primary">{sendingProtocole?"Envoi…":`Envoyer à ${selected.prenom}`}</Btn>
                 </div>
+              </div>
+
+              {/* Protocole praticienne privé */}
+              <div style={{marginTop:20}}>
+                <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:12}}>🔒 Protocole praticienne (privé — généré par l'IA)</p>
+                <textarea value={protoPrat} onChange={e=>setProtoPrat(e.target.value)} placeholder={`Données techniques pour ${selected.prenom}…`} rows={8} style={{...iP("p"),resize:"vertical",marginBottom:10}}/>
+                <Btn onClick={saveProtoPrat} disabled={savingProtoPrat||!protoPrat.trim()} variant="primary">{savingProtoPrat?"Enregistrement…":"Enregistrer le protocole praticienne"}</Btn>
               </div>
             </div>
           )}
@@ -1935,7 +2218,7 @@ function Praticienne({ user, onLogout }) {
           )}
 
           {/* ── ONGLET DOCUMENTS ── */}
-          {activeTab==="documents"&&!["anamnese","protocole","complements"].includes(activeTab)&&(
+          {activeTab==="documents"&&(
             <div>
               {documents.length===0?<EmptyState message={`Aucun document partagé par ${selected.prenom}.`} theme="p"/>
                 :documents.map(d=>(<div key={d.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"14px 18px",marginBottom:10}}><p style={{color:P.pTextDim,fontSize:11,marginBottom:10}}>{new Date(d.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{d.files?.map((f,i)=><a key={i} href={fixPdfUrl(f.url)} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:8,padding:"7px 12px",color:P.pAccent,fontSize:12,textDecoration:"none"}}><span>{f.type?.includes("image")?"🖼":"📄"}</span><span>{f.name}</span><span style={{opacity:0.6,fontSize:10}}>↓</span></a>)}</div></div>))}
@@ -1948,59 +2231,12 @@ function Praticienne({ user, onLogout }) {
               <div style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:10,padding:"10px 14px",marginBottom:16}}><p style={{color:P.pAccent,fontSize:11}}>🔒 Ces notes sont uniquement visibles par toi.</p></div>
               <textarea value={privateNotes} onChange={e=>setPrivateNotes(e.target.value)} placeholder={`Observations cliniques pour ${selected.prenom}…`} rows={5} style={{...iP("p"),resize:"vertical",marginBottom:10}}/>
               <Btn onClick={saveNote} disabled={savingNote||!privateNotes.trim()} variant="primary" style={{marginBottom:24}}>{savingNote?"Enregistrement…":"Enregistrer la note"}</Btn>
-              {noteHistory.length>0&&(
+              {noteHistory.filter(n=>n.type!=="protocole_praticienne"&&n.type!=="protocole_praticienne_ia").length>0&&(
                 <div>
                   <p style={{color:P.pTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1px",marginBottom:12}}>Historique des notes</p>
-                  {noteHistory.map(n=>(<div key={n.id} style={{background:P.pSurface,border:`1px solid ${P.pBorder}`,borderRadius:12,padding:"14px 16px",marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><p style={{color:P.pTextDim,fontSize:11}}>{new Date(n.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><button onClick={()=>deleteNote(n.id)} style={{background:"none",border:"none",color:"#B5583A",fontSize:16,cursor:"pointer",lineHeight:1}}>×</button></div><p style={{color:P.pTextMid,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{n.text}</p></div>))}
+                  {noteHistory.filter(n=>n.type!=="protocole_praticienne"&&n.type!=="protocole_praticienne_ia").map(n=>(<div key={n.id} style={{background:P.pSurface,border:`1px solid ${P.pBorder}`,borderRadius:12,padding:"14px 16px",marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><p style={{color:P.pTextDim,fontSize:11}}>{new Date(n.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><button onClick={()=>deleteNote(n.id)} style={{background:"none",border:"none",color:"#B5583A",fontSize:16,cursor:"pointer",lineHeight:1}}>×</button></div><p style={{color:P.pTextMid,fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{n.text}</p></div>))}
                 </div>
               )}
-              <div style={{marginTop:28}}>
-                <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:12}}>🔒 Protocole praticienne (privé — généré par l'IA)</p>
-                <textarea value={protoPrat} onChange={e=>setProtoPrat(e.target.value)} placeholder={`Données techniques pour ${selected.prenom}…`} rows={8} style={{...iP("p"),resize:"vertical",marginBottom:10}}/>
-                <Btn onClick={saveProtoPrat} disabled={savingProtoPrat||!protoPrat.trim()} variant="primary">{savingProtoPrat?"Enregistrement…":"Enregistrer le protocole praticienne"}</Btn>
-              </div>
-            </div>
-          )}
-
-          {/* ── ONGLET SUIVIS RDV PRATICIENNE ── */}
-          {activeTab==="suivirdv"&&(
-            <div>
-              <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:14}}>Questionnaires de suivi par consultation</p>
-              {[1,2,3,4,5,6].map(n=>{
-                const rdv=suivisRdvClient?.find(s=>Number(s.numRdv)===n);
-                return(
-                  <div key={n} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${rdv?P.pGreen+"44":P.pBorder}`,padding:"16px 18px",marginBottom:10}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:rdv?12:0}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <span style={{fontSize:16}}>{rdv?"✅":"⬜"}</span>
-                        <p style={{color:rdv?P.pText:P.pTextDim,fontWeight:rdv?500:400,fontSize:14}}>Consultation {n}</p>
-                      </div>
-                      {rdv&&(
-                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                          <p style={{color:P.pTextDim,fontSize:11}}>{new Date(rdv.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
-                          <button onClick={()=>downloadSuiviRdvPDF(rdv,selected.prenom)} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer"}}>⬇ PDF</button>
-                        </div>
-                      )}
-                    </div>
-                    {rdv&&(
-                      <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                        {[
-                          ["Problématique",rdv.problematique],["Évolution depuis dernière consult",rdv.evolution],
-                          ["Sommeil",rdv.sommeil],["Digestion",rdv.digestion],["Cycle",rdv.cycle],
-                          ["Anxiété / Stress",rdv.anxiete],["Thyroïde",rdv.thyroide],
-                          ["Compléments pris",rdv.complements],["Difficultés",rdv.difficultes],
-                          ["Ce qui a changé positivement",rdv.positif],["Commentaire pour Meije",rdv.commentaire],
-                        ].filter(([_,v])=>v&&v.trim()).map(([label,val])=>(
-                          <div key={label} style={{display:"flex",gap:10,background:P.pSurface2,borderRadius:8,padding:"8px 12px"}}>
-                            <span style={{color:P.pTextDim,fontSize:12,minWidth:200,flexShrink:0}}>{label}</span>
-                            <span style={{color:P.pTextMid,fontSize:13,lineHeight:1.5}}>{val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           )}
 
