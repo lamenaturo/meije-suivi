@@ -1605,6 +1605,8 @@ function Praticienne({ user, onLogout }) {
     if(window._clientUnsubs)window._clientUnsubs.forEach(fn=>fn());
     setSelected(c);setNewMsg("");setActiveTab(null);setAnamneseMode("view");setIaError("");setIaStep("");
     setClientData(null);setEntries([]);setMessages([]);setAnamneses([]);setProtocoles([]);setDocuments([]);setNoteHistory([]);setSuivisRdvClient([]);
+    setPrescriptions({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
+    setPrescriptionsHistory([]);
     setNewProtocole({titre:getDefaultTitre(c.prenom,0),contenu:getDefaultMessage(c.prenom)});
     const userRef=doc(db,"users",c.uid);
     const u0=onSnapshot(userRef,d=>setClientData(d.data()));
