@@ -30,7 +30,7 @@ const COMPLEMENTS_LISTE = {
     "Zinc","Fer bisglycinate","Fer fumarate","Iode","Sélénium","Chrome","Cuivre","Manganèse","Silicium",
   ],
   "Acides aminés & méthylation": [
-    "TMG (triméthylglycine)","Bétaïne HCl","Méthionine","Taurine","L-Carnitine","Glutamine",
+    "TMG (triméthylglycine)","Bétaïne HCl","Glycine","Méthionine","Taurine","L-Carnitine","Glutamine",
     "5-HTP","GABA","NAC (N-acétylcystéine)","Inositol / Myo-inositol","Phosphatidylsérine",
   ],
   "Acides gras": [
@@ -883,9 +883,8 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const { getDocs, query: q2, collection: col2, where: wh, orderBy: ob, limit: lim } = await import("firebase/firestore");
-        const snap = await getDocs(q2(col2(db,"prescriptions"),wh("clientUid","==",user.uid),ob("date","desc"),lim(1)));
-        if (!snap.empty) setDernieresPrescriptions(snap.docs[0].data());
+        const snap = await getDoc(doc(db,"prescriptions",`prescriptions_${user.uid}`));
+        if (snap.exists()) setDernieresPrescriptions(snap.data());
         const uSnap = await getDoc(doc(db,"users",user.uid));
         setProfilsActifsClient(uSnap.data()?.profils || []);
       } catch {}
@@ -1625,13 +1624,17 @@ function Praticienne({ user, onLogout }) {
     setSuivisRdvClient([]);
     const q8=query(collection(db,"suivis_rdv"),where("userUid","==",c.uid),orderBy("date","asc"));
     const u8=onSnapshot(q8,s=>setSuivisRdvClient(s.docs.map(d=>({id:d.id,...d.data()}))||[]),()=>setSuivisRdvClient([]));
-    // Prescriptions structurées
-    const q9=query(collection(db,"prescriptions"),where("clientUid","==",c.uid),orderBy("date","desc"));
-    const u9=onSnapshot(q9,s=>{
-      const list=s.docs.map(d=>({id:d.id,...d.data()}))||[];
-      setPrescriptionsHistory(list);
-      if(list.length>0){const last=list[0];setPrescriptions({complements:last.complements||[],evictions:last.evictions||[],bilans:last.bilans||[],autresPoints:last.autresPoints||"",rdvNum:(last.rdvNum||1)+1});}
-      else setPrescriptions({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
+    // Prescriptions structurées — doc fixe par cliente
+    const prescRef=doc(db,"prescriptions",`prescriptions_${c.uid}`);
+    const u9=onSnapshot(prescRef,snap=>{
+      if(snap.exists()){
+        const d=snap.data();
+        setPrescriptionsHistory([{id:snap.id,...d}]);
+        setPrescriptions({complements:d.complements||[],evictions:d.evictions||[],bilans:d.bilans||[],autresPoints:d.autresPoints||"",rdvNum:d.rdvNum||1});
+      } else {
+        setPrescriptionsHistory([]);
+        setPrescriptions({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
+      }
     },()=>setPrescriptionsHistory([]));
     window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6,u8,u9];
     setPrivateNotes("");setMainView("fiche");
@@ -1644,13 +1647,15 @@ function Praticienne({ user, onLogout }) {
   const savePrescriptions=async()=>{
     if(!selected)return;
     setSavingPrescriptions(true);
-    await addDoc(collection(db,"prescriptions"),{
-      clientUid:selected.uid,clientPrenom:selected.prenom,
-      ...prescriptions,
-      date:new Date().toISOString(),
-    });
+    try{
+      await setDoc(doc(db,"prescriptions",`prescriptions_${selected.uid}`),{
+        clientUid:selected.uid,clientPrenom:selected.prenom,
+        ...prescriptions,
+        date:new Date().toISOString(),
+      });
+      showToast("Prescriptions enregistrées ✓");
+    }catch(e){showToast("Erreur : "+e.message);}
     setSavingPrescriptions(false);
-    showToast("Prescriptions enregistrées ✓");
   };
   const saveStatut=async(uid,statut)=>{await updateDoc(doc(db,"users",uid),{statut});};
   const deleteClient=async(c)=>{
