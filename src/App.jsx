@@ -1844,7 +1844,7 @@ function Praticienne({ user, onLogout }) {
                     {a.type==="anamnese"&&clientCible&&(()=>{
                       const anamClientData=a;
                       return(
-                        <button onClick={async(e)=>{e.stopPropagation();try{const snap=await getDocs(query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid),orderBy("date","desc")));if(!snap.empty){downloadAnamnesePDF({id:snap.docs[0].id,...snap.docs[0].data()},prenom);}else{showToast("Aucun questionnaire trouvé");}}catch(err){showToast("Erreur : "+err.message);}}} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        <button onClick={async(e)=>{e.stopPropagation();try{const snap=await getDocs(query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid)));if(!snap.empty){const docs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>new Date(b.date)-new Date(a.date));downloadAnamnesePDF(docs[0],prenom);}else{showToast("Aucun questionnaire trouvé");}}catch(err){showToast("Erreur : "+err.message);}}} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
                           ⬇ PDF
                         </button>
                       );
