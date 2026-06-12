@@ -842,12 +842,8 @@ ${rows.map(([label, val]) => `<div class="row"><span class="label">${label}</spa
 </html>`;
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `suivi_rdv${rdv.numRdv}_${(prenom||"cliente").toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.html`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 };
 
 
@@ -1600,9 +1596,10 @@ function Praticienne({ user, onLogout }) {
   const clientsActifs=clients;
   const clientsFiltres=clientsActifs.filter(c=>(c.prenom||"").toLowerCase().includes(recherche.toLowerCase())||(c.email||"").toLowerCase().includes(recherche.toLowerCase()));
 
-  const select=useCallback(c=>{
+  const select=useCallback((c,tabCible=null,sousTabCible=null)=>{
     if(window._clientUnsubs)window._clientUnsubs.forEach(fn=>fn());
-    setSelected(c);setNewMsg("");setActiveTab(null);setAnamneseMode("view");setIaError("");setIaStep("");
+    setSelected(c);setNewMsg("");setActiveTab(tabCible);setAnamneseMode("view");setIaError("");setIaStep("");
+    if(sousTabCible)setSuiviSubTab(sousTabCible);
     setClientData(null);setEntries([]);setMessages([]);setAnamneses([]);setProtocoles([]);setDocuments([]);setNoteHistory([]);setSuivisRdvClient([]);
     setPrescriptions({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
     setPrescriptionsHistory([]);
@@ -1839,8 +1836,7 @@ function Praticienne({ user, onLogout }) {
               return(
                 <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,background:P.pSurface,borderRadius:10,border:`0.5px solid ${P.pBorder}`,padding:"10px 14px",marginBottom:8}} className="card-raised-dark">
                   <span style={{fontSize:16}}>{icons[a.type]}</span>
-                  <div style={{flex:1,cursor:clientCible?"pointer":"default"}} onClick={()=>{if(clientCible){setSelected(clientCible);select(clientCible);}}}>
-                    <p style={{color:P.pText,fontSize:13}}><span style={{color:colors[a.type],fontWeight:500}}>{prenom}</span> {labels[a.type]}</p>
+                  <div style={{flex:1,cursor:clientCible?"pointer":"default"}} onClick={()=>{if(clientCible){if(a.type==="suivi")select(clientCible,"suivi","hebdo");else if(a.type==="anamnese")select(clientCible,"anamnese");else if(a.type==="document")select(clientCible,"documents");else select(clientCible,"suivi","hebdo");}}}>                    <p style={{color:P.pText,fontSize:13}}><span style={{color:colors[a.type],fontWeight:500}}>{prenom}</span> {labels[a.type]}</p>
                     {a.weekLabel&&<p style={{color:P.pTextDim,fontSize:11,marginTop:2}}>{a.weekLabel}</p>}
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
