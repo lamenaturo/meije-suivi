@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, browserLocalPersistence, setPersistence } from "firebase/auth";
-import { collection, addDoc, doc, setDoc, getDoc, query, orderBy, where, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, getDoc, getDocs, query, orderBy, where, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import Anamnese from "./Anamnese";
 import { getSystemClient, getSystemPraticienne } from "./normes";
@@ -1312,8 +1312,8 @@ function Cliente({ user, onLogout }) {
                 <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:12}}>Suivi par consultation</p>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {[1,2,3,4,5,6].map(n=>{
-                    const done=suiviRdvList.some(s=>s.numRdv===n);
-                    const prevDone=n===1||suiviRdvList.some(s=>s.numRdv===n-1);
+                    const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
+                    const prevDone=n===1||suiviRdvList.some(s=>Number(s.numRdv)===n-1);
                     const locked=!prevDone&&!done;
                     return(
                       <button key={n} onClick={()=>{if(locked)return;setSuiviRdvNum(n);setSuiviRdvView(true);}}
@@ -1844,7 +1844,7 @@ function Praticienne({ user, onLogout }) {
                     {a.type==="anamnese"&&clientCible&&(()=>{
                       const anamClientData=a;
                       return(
-                        <button onClick={async(e)=>{e.stopPropagation();try{const q=query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid),orderBy("date","desc"));const{getDocs}=await import("firebase/firestore");const snap=await getDocs(q);if(!snap.empty){const an={id:snap.docs[0].id,...snap.docs[0].data()};downloadAnamnesePDF(an,prenom);}}catch(err){showToast("Erreur téléchargement");} }} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        <button onClick={async(e)=>{e.stopPropagation();try{const snap=await getDocs(query(collection(db,"anamneses"),where("userUid","==",a.userUid||a.clientUid),orderBy("date","desc")));if(!snap.empty){downloadAnamnesePDF({id:snap.docs[0].id,...snap.docs[0].data()},prenom);}else{showToast("Aucun questionnaire trouvé");}}catch(err){showToast("Erreur : "+err.message);}}} style={{background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:20,padding:"5px 12px",color:P.pAccent,fontSize:11,fontFamily:P.sans,cursor:"pointer",whiteSpace:"nowrap"}}>
                           ⬇ PDF
                         </button>
                       );
@@ -2026,7 +2026,7 @@ function Praticienne({ user, onLogout }) {
                 <div>
                   <p style={{color:P.pTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:14}}>Questionnaires de suivi par consultation</p>
                   {[1,2,3,4,5,6].map(n=>{
-                    const rdv=suivisRdvClient?.find(s=>s.numRdv===n);
+                    const rdv=suivisRdvClient?.find(s=>Number(s.numRdv)===n);
                     return(
                       <div key={n} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${rdv?P.pGreen+"44":P.pBorder}`,padding:"16px 18px",marginBottom:10}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:rdv?12:0}}>
