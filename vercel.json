@@ -3,6 +3,9 @@
     "api/claude.js": {
       "memory": 1024,
       "maxDuration": 30
+    },
+    "api/send-reminders.js": {
+      "runtime": "nodejs18.x"
     }
   }
 }
