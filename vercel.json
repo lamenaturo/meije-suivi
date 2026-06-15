@@ -5,7 +5,8 @@
       "maxDuration": 30
     },
     "api/send-reminders.js": {
-      "runtime": "nodejs18.x"
+      "memory": 512,
+      "maxDuration": 30
     }
   }
 }
