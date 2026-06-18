@@ -1286,103 +1286,120 @@ function Cliente({ user, onLogout }) {
               {key:"documents",icon:"📁",label:"Mes documents",badge:false},
               {key:"messages",icon:"💬",label:"Messages",badge:lm&&Date.now()-new Date(lm.date).getTime()<7*24*60*60*1000},
             ].map(({key,icon,label,badge})=>{
-              const isOpen=clientFolder===key;
+              const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivis",evolution:"evolution",documents:"docs",messages:"messages"};
               return(
-                <button key={key} onClick={()=>setClientFolder(isOpen?null:key)} style={{background:isOpen?"linear-gradient(135deg,rgba(138,90,42,0.15),rgba(138,90,42,0.05))":P.cSurface,border:`1px solid ${isOpen?"rgba(138,90,42,0.35)":P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:isOpen?"0 4px 18px rgba(138,90,42,0.2), inset 0 1px 0 rgba(255,255,255,0.15)":"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)"}}>
+                <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)"}}>
                   {badge&&<span style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:P.cTerra}}/>}
                   <span style={{fontSize:28}}>{icon}</span>
-                  <p style={{color:isOpen?P.cAccent:P.cTextMid,fontSize:12,fontWeight:isOpen?600:400,textAlign:"center",letterSpacing:"0.3px"}}>{label}</p>
-                  <span style={{color:isOpen?P.cAccent:P.cTextDim,fontSize:10,transition:"transform 0.2s",display:"block",transform:isOpen?"rotate(180deg)":"none"}}>▾</span>
+                  <p style={{color:P.cTextMid,fontSize:12,fontWeight:400,textAlign:"center",letterSpacing:"0.3px"}}>{label}</p>
                 </button>
               );
             })}
           </div>
-          {clientFolder==="protocole"&&(
-            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}} className="fade-in">
-              {protocoles.length===0
-                ? <div style={{background:P.cSurface,borderRadius:14,border:`1px solid ${P.cBorder}`,padding:"20px",textAlign:"center"}}><p style={{color:P.cTextDim,fontSize:13}}>Tes protocoles apparaîtront ici après chaque consultation 🌿</p></div>
-                : protocoles.map((p,i)=>{
-                    const num=i+1;
-                    const [open,setOpen]=[clientFolder===`protocole_${num}`,v=>setClientFolder(v?`protocole_${num}`:clientFolder===`protocole_${num}`?null:clientFolder)];
-                    return(
-                      <div key={i}>
-                        <button onClick={()=>setClientFolder(clientFolder===`protocole_open_${num}`?null:`protocole_open_${num}`)}
-                          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderRadius:12,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left"}}>
-                          <div style={{display:"flex",alignItems:"center",gap:12}}>
-                            <span style={{fontSize:18}}>🌿</span>
-                            <div>
-                              <p style={{color:P.cGreen,fontSize:13,fontWeight:600}}>{p.titre}</p>
-                              <p style={{color:P.cTextMid,fontSize:11,marginTop:2}}>{new Date(p.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
-                            </div>
-                          </div>
-                          <span style={{color:P.cGreen,fontSize:18,transition:"transform 0.2s",display:"block",transform:clientFolder===`protocole_open_${num}`?"rotate(180deg)":"none"}}>▾</span>
-                        </button>
-                        {clientFolder===`protocole_open_${num}`&&(
-                          <div style={{background:P.cSurface,borderRadius:"0 0 12px 12px",border:`1px solid ${P.cBorder}`,borderTop:"none",padding:"16px 18px",marginTop:-4}} className="fade-in">
-                            <p style={{color:P.cTextMid,fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{p.contenu}</p>
-                            {p.fichiers?.length>0&&<div style={{marginTop:12,display:"flex",flexWrap:"wrap",gap:8}}>{p.fichiers.map((f,j)=><a key={j} href={f.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"6px 12px",color:P.cGreen,fontSize:12,textDecoration:"none"}}>📄 {f.name}</a>)}</div>}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-              }
-            </div>
-          )}
-          {clientFolder==="suivi"&&(
-            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}} className="fade-in">
-              {/* Suivi hebdomadaire */}
-              <button onClick={()=>setView("suivi")} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"16px 18px",borderRadius:14,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left"}}>
-                <span style={{fontSize:22}}>📝</span>
-                <div>
-                  <p style={{color:P.cGreen,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginBottom:3}}>Suivi hebdomadaire</p>
-                  <p style={{color:P.cText,fontSize:13,fontWeight:500}}>Remplir mon suivi de la semaine →</p>
-                </div>
-              </button>
-              {entries.length>0&&<button onClick={()=>setView("historique")} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"12px 16px",borderRadius:12,border:`1px solid ${P.cBorder}`,background:P.cSurface,cursor:"pointer",textAlign:"left"}}><span style={{fontSize:16}}>📊</span><p style={{color:P.cTextMid,fontSize:13}}>Voir mon historique</p></button>}
-              {/* Suivi par consultation */}
-              <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginTop:6,marginBottom:0,paddingLeft:4}}>Suivi par consultation</p>
-              {[1,2,3,4,5,6].map(n=>{
-                const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
-                const prevDone=n===1||suiviRdvList.some(s=>Number(s.numRdv)===n-1);
-                const locked=!prevDone&&!done;
-                return(
-                  <button key={n} onClick={()=>{if(locked)return;setSuiviRdvNum(n);setSuiviRdvView(true);}}
-                    style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderRadius:12,border:`1.5px solid ${done?P.cGreenBorder:locked?"rgba(44,28,12,0.08)":P.cBorder}`,background:done?P.cGreenDim:locked?"rgba(44,28,12,0.03)":P.cSurface,cursor:locked?"not-allowed":"pointer",opacity:locked?0.5:1,transition:"all 0.2s",textAlign:"left"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:12}}>
-                      <span style={{fontSize:18}}>{done?"✅":locked?"🔒":"📋"}</span>
-                      <div>
-                        <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cText,fontSize:13,fontWeight:done?600:500}}>Consultation {n}</p>
-                        <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cTextMid,fontSize:11,marginTop:2}}>{done?"Rempli ✓":locked?`Remplis d'abord la consultation ${n-1}`:"À remplir avant le rendez-vous"}</p>
-                      </div>
-                    </div>
-                    {!locked&&<span style={{color:done?P.cGreen:P.cTextDim,fontSize:18}}>›</span>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          {clientFolder==="documents"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("docs")} style={{width:"100%"}}>Gérer mes documents →</Btn></div>)}
-          {clientFolder==="questionnaire"&&(
-            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}} className="fade-in">
-              <div style={{background:P.cSurface2,borderRadius:10,padding:"10px 14px",marginBottom:4}}>
-                <p style={{color:P.cTerra,fontSize:11,fontWeight:600}}>⓵ Étape 1 — À remplir avant votre première consultation</p>
-              </div>
-              <button onClick={()=>setAnamneseView(true)} style={{width:"100%",background:hasAnamnese?P.cGreenDim:P.cTerraDim,border:`1.5px solid ${hasAnamnese?P.cGreenBorder:"rgba(181,88,58,0.3)"}`,borderRadius:14,padding:"16px 18px",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
-                <span style={{fontSize:24}}>{hasAnamnese?"✅":"📋"}</span>
-                <div>
-                  <p style={{color:hasAnamnese?P.cGreen:P.cTerra,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginBottom:3}}>Questionnaire initial</p>
-                  <p style={{color:P.cText,fontSize:13,fontWeight:500}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</p>
-                </div>
-              </button>
-            </div>
-          )}
-          {clientFolder==="evolution"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("evolution")} style={{width:"100%"}}>Voir mon évolution →</Btn></div>)}
-          {clientFolder==="messages"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">{messages.length===0?<p style={{color:P.cTextDim,fontSize:13,textAlign:"center"}}>Aucun message pour l'instant 🌿</p>:messages.slice().reverse().slice(0,5).map(m=>(<div key={m.id} style={{background:P.cSurface2,borderRadius:12,padding:"12px 14px",marginBottom:8}}><p style={{color:P.cText,fontSize:13,lineHeight:1.6}}>{m.text}</p><p style={{color:P.cTextDim,fontSize:11,marginTop:4}}>{new Date(m.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p></div>))}</div>)}
+
         </div>
       )}
 
-      {view==="suivi"&&(
+      {view==="questionnaire"&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:4}}>Questionnaire</p>
+          <p style={{color:P.cTextDim,fontSize:12,marginBottom:20}}>À remplir au moins 72h avant votre première consultation</p>
+          <div style={{background:hasAnamnese?P.cGreenDim:P.cTerraDim,border:`1.5px solid ${hasAnamnese?P.cGreenBorder:"rgba(181,88,58,0.3)"}`,borderRadius:14,padding:"4px 14px 10px",marginBottom:12}}>
+            <p style={{color:hasAnamnese?P.cGreen:P.cTerra,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginTop:12,marginBottom:8}}>⓵ Étape 1 — Questionnaire initial</p>
+            <Btn variant="cPrimary" onClick={()=>setAnamneseView(true)} style={{width:"100%"}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</Btn>
+          </div>
+        </div>
+      )}
+
+      {view==="protocoles"&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:4}}>Mes protocoles</p>
+          <p style={{color:P.cTextDim,fontSize:12,marginBottom:20}}>Tes protocoles personnalisés, consultation après consultation</p>
+          {protocoles.length===0
+            ? <EmptyState message="Ton protocole personnalisé apparaîtra ici après votre première consultation 🌿" theme="c"/>
+            : [...protocoles].reverse().map((p,i)=>(
+                <div key={p.id} style={{background:P.cSurface,borderRadius:14,border:`1px solid ${P.cBorder}`,marginBottom:12,overflow:"hidden"}}>
+                  <button onClick={()=>setClientFolder(clientFolder===`proto_${i}`?null:`proto_${i}`)}
+                    style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 18px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <span style={{fontSize:20}}>🌿</span>
+                      <div>
+                        <p style={{color:P.cText,fontFamily:P.serif,fontSize:17,fontWeight:400}}>{p.titre}</p>
+                        <p style={{color:P.cTextDim,fontSize:11,marginTop:2}}>{new Date(p.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+                      </div>
+                    </div>
+                    <span style={{color:P.cTextDim,fontSize:18,transform:clientFolder===`proto_${i}`?"rotate(180deg)":"none",transition:"transform 0.2s",display:"block"}}>▾</span>
+                  </button>
+                  {clientFolder===`proto_${i}`&&(
+                    <div style={{padding:"0 18px 18px",borderTop:`1px solid ${P.cBorder}`}} className="fade-in">
+                      <p style={{color:P.cTextMid,fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap",paddingTop:14}}>{p.contenu}</p>
+                      {p.fichiers?.length>0&&<div style={{marginTop:12,display:"flex",flexWrap:"wrap",gap:8}}>{p.fichiers.map((f,j)=><a key={j} href={f.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"8px 14px",color:P.cGreen,fontSize:12,textDecoration:"none"}}><span>{f.type?.includes("pdf")?"📄":"🖼"}</span><span>{f.name}</span></a>)}</div>}
+                    </div>
+                  )}
+                </div>
+              ))
+          }
+        </div>
+      )}
+
+      {view==="suivis"&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Mes suivis</p>
+          {/* Suivi hebdomadaire */}
+          <p style={{color:P.cTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"2px",marginBottom:10}}>Suivi hebdomadaire</p>
+          <button onClick={()=>setView("suivi")} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"16px 18px",borderRadius:14,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left",marginBottom:8}}>
+            <span style={{fontSize:22}}>📝</span>
+            <div>
+              <p style={{color:P.cGreen,fontSize:13,fontWeight:600}}>Remplir mon suivi de la semaine →</p>
+              <p style={{color:P.cTextMid,fontSize:11,marginTop:2}}>{wk()}</p>
+            </div>
+          </button>
+          {entries.length>0&&<button onClick={()=>setView("historique")} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:`1px solid ${P.cBorder}`,background:P.cSurface,cursor:"pointer",textAlign:"left",marginBottom:20}}><span style={{fontSize:16}}>📊</span><p style={{color:P.cTextMid,fontSize:13}}>Voir mon historique</p></button>}
+          {/* Suivi par consultation */}
+          <p style={{color:P.cTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"2px",marginBottom:10}}>Suivi par consultation</p>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {[1,2,3,4,5,6].map(n=>{
+              const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
+              const prevDone=n===1||suiviRdvList.some(s=>Number(s.numRdv)===n-1);
+              const locked=!prevDone&&!done;
+              return(
+                <button key={n} onClick={()=>{if(locked)return;setSuiviRdvNum(n);setSuiviRdvView(true);}}
+                  style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderRadius:12,border:`1.5px solid ${done?P.cGreenBorder:locked?"rgba(44,28,12,0.08)":P.cBorder}`,background:done?P.cGreenDim:locked?"rgba(44,28,12,0.03)":P.cSurface,cursor:locked?"not-allowed":"pointer",opacity:locked?0.5:1,transition:"all 0.2s",textAlign:"left"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <span style={{fontSize:18}}>{done?"✅":locked?"🔒":"📋"}</span>
+                    <div>
+                      <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cText,fontSize:13,fontWeight:done?600:500}}>Consultation {n}</p>
+                      <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cTextMid,fontSize:11,marginTop:2}}>{done?"Rempli ✓":locked?`Remplis d'abord la consultation ${n-1}`:"À remplir avant le rendez-vous"}</p>
+                    </div>
+                  </div>
+                  {!locked&&<span style={{color:done?P.cGreen:P.cTextDim,fontSize:18}}>›</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {view==="messages"&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Messages</p>
+          {messages.length===0
+            ? <EmptyState message="Aucun message pour l'instant 🌿" theme="c"/>
+            : messages.slice().reverse().map(m=>(
+                <div key={m.id} style={{background:P.cSurface,borderRadius:12,border:`1px solid ${P.cBorder}`,padding:"14px 16px",marginBottom:10}}>
+                  <p style={{color:P.cText,fontSize:13,lineHeight:1.7}}>{m.text}</p>
+                  <p style={{color:P.cTextDim,fontSize:11,marginTop:6}}>{new Date(m.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p>
+                </div>
+              ))
+          }
+        </div>
+      )}
+
+            {view==="suivi"&&(
         <div style={inner} className="fade-in">
           <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
           <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:4}}>Suivi de la semaine</p>
