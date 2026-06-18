@@ -1279,11 +1279,11 @@ function Cliente({ user, onLogout }) {
           <p style={{color:P.cTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"2px",marginBottom:12}}>Mes dossiers</p>
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,marginBottom:16}}>
             {[
-              {key:"protocole",icon:"🌿",label:"Mon protocole",badge:protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000},
-              {key:"suivi",icon:"📝",label:"Mon suivi",badge:false},
-              {key:"documents",icon:"📁",label:"Mes documents",badge:false},
               {key:"questionnaire",icon:"📋",label:"Questionnaire",badge:!hasAnamnese},
+              {key:"protocole",icon:"🌿",label:"Protocole",badge:protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000},
+              {key:"suivi",icon:"📝",label:"Suivis",badge:false},
               {key:"evolution",icon:"📈",label:"Mon évolution",badge:false},
+              {key:"documents",icon:"📁",label:"Mes documents",badge:false},
               {key:"messages",icon:"💬",label:"Messages",badge:lm&&Date.now()-new Date(lm.date).getTime()<7*24*60*60*1000},
             ].map(({key,icon,label,badge})=>{
               const isOpen=clientFolder===key;
@@ -1297,24 +1297,51 @@ function Cliente({ user, onLogout }) {
               );
             })}
           </div>
-          {clientFolder==="protocole"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">{protocoles.length===0?<p style={{color:P.cTextDim,fontSize:13,textAlign:"center"}}>Ton protocole arrive bientôt 🌿</p>:protocoles.map((p,i)=>(<div key={i} style={{marginBottom:i<protocoles.length-1?20:0}}><p style={{fontFamily:P.serif,fontSize:18,color:P.cText,marginBottom:8}}>{p.titre}</p><p style={{color:P.cTextMid,fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{p.contenu}</p>{p.fichiers?.map((f,j)=><a key={j} href={f.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:10,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"6px 12px",color:P.cGreen,fontSize:12,textDecoration:"none"}}>📄 {f.name}</a>)}</div>))}</div>)}
-          {clientFolder==="suivi"&&(
-            <div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">
-              <Btn variant="cPrimary" onClick={()=>setView("suivi")} style={{width:"100%",marginBottom:12}}>Remplir mon suivi hebdomadaire →</Btn>
-              {entries.length>0&&<Btn variant="ghost" theme="c" onClick={()=>setView("historique")} style={{width:"100%"}}>Voir mon historique</Btn>}
+          {clientFolder==="protocole"&&(
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}} className="fade-in">
+              {protocoles.length===0
+                ? <div style={{background:P.cSurface,borderRadius:14,border:`1px solid ${P.cBorder}`,padding:"20px",textAlign:"center"}}><p style={{color:P.cTextDim,fontSize:13}}>Tes protocoles apparaîtront ici après chaque consultation 🌿</p></div>
+                : protocoles.map((p,i)=>{
+                    const num=i+1;
+                    const [open,setOpen]=[clientFolder===`protocole_${num}`,v=>setClientFolder(v?`protocole_${num}`:clientFolder===`protocole_${num}`?null:clientFolder)];
+                    return(
+                      <div key={i}>
+                        <button onClick={()=>setClientFolder(clientFolder===`protocole_open_${num}`?null:`protocole_open_${num}`)}
+                          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderRadius:12,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:12}}>
+                            <span style={{fontSize:18}}>🌿</span>
+                            <div>
+                              <p style={{color:P.cGreen,fontSize:13,fontWeight:600}}>{p.titre}</p>
+                              <p style={{color:P.cTextMid,fontSize:11,marginTop:2}}>{new Date(p.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+                            </div>
+                          </div>
+                          <span style={{color:P.cGreen,fontSize:18,transition:"transform 0.2s",display:"block",transform:clientFolder===`protocole_open_${num}`?"rotate(180deg)":"none"}}>▾</span>
+                        </button>
+                        {clientFolder===`protocole_open_${num}`&&(
+                          <div style={{background:P.cSurface,borderRadius:"0 0 12px 12px",border:`1px solid ${P.cBorder}`,borderTop:"none",padding:"16px 18px",marginTop:-4}} className="fade-in">
+                            <p style={{color:P.cTextMid,fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{p.contenu}</p>
+                            {p.fichiers?.length>0&&<div style={{marginTop:12,display:"flex",flexWrap:"wrap",gap:8}}>{p.fichiers.map((f,j)=><a key={j} href={f.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"6px 12px",color:P.cGreen,fontSize:12,textDecoration:"none"}}>📄 {f.name}</a>)}</div>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+              }
             </div>
           )}
-          {clientFolder==="documents"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("docs")} style={{width:"100%"}}>Gérer mes documents →</Btn></div>)}
-          {clientFolder==="questionnaire"&&(
-            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}} className="fade-in">
-              <button onClick={()=>setAnamneseView(true)} style={{width:"100%",background:hasAnamnese?P.cGreenDim:P.cTerraDim,border:`1.5px solid ${hasAnamnese?P.cGreenBorder:"rgba(181,88,58,0.3)"}`,borderRadius:14,padding:"16px 18px",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
-                <span style={{fontSize:24}}>{hasAnamnese?"✅":"📋"}</span>
+          {clientFolder==="suivi"&&(
+            <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}} className="fade-in">
+              {/* Suivi hebdomadaire */}
+              <button onClick={()=>setView("suivi")} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"16px 18px",borderRadius:14,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left"}}>
+                <span style={{fontSize:22}}>📝</span>
                 <div>
-                  <p style={{color:hasAnamnese?P.cGreen:P.cTerra,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginBottom:3}}>Questionnaire initial</p>
-                  <p style={{color:P.cText,fontSize:13,fontWeight:500}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</p>
+                  <p style={{color:P.cGreen,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginBottom:3}}>Suivi hebdomadaire</p>
+                  <p style={{color:P.cText,fontSize:13,fontWeight:500}}>Remplir mon suivi de la semaine →</p>
                 </div>
               </button>
-              <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginTop:4,marginBottom:0,paddingLeft:4}}>Suivi par consultation</p>
+              {entries.length>0&&<button onClick={()=>setView("historique")} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"12px 16px",borderRadius:12,border:`1px solid ${P.cBorder}`,background:P.cSurface,cursor:"pointer",textAlign:"left"}}><span style={{fontSize:16}}>📊</span><p style={{color:P.cTextMid,fontSize:13}}>Voir mon historique</p></button>}
+              {/* Suivi par consultation */}
+              <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginTop:6,marginBottom:0,paddingLeft:4}}>Suivi par consultation</p>
               {[1,2,3,4,5,6].map(n=>{
                 const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
                 const prevDone=n===1||suiviRdvList.some(s=>Number(s.numRdv)===n-1);
@@ -1333,6 +1360,21 @@ function Cliente({ user, onLogout }) {
                   </button>
                 );
               })}
+            </div>
+          )}
+          {clientFolder==="documents"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("docs")} style={{width:"100%"}}>Gérer mes documents →</Btn></div>)}
+          {clientFolder==="questionnaire"&&(
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}} className="fade-in">
+              <div style={{background:P.cSurface2,borderRadius:10,padding:"10px 14px",marginBottom:4}}>
+                <p style={{color:P.cTerra,fontSize:11,fontWeight:600}}>⓵ Étape 1 — À remplir avant votre première consultation</p>
+              </div>
+              <button onClick={()=>setAnamneseView(true)} style={{width:"100%",background:hasAnamnese?P.cGreenDim:P.cTerraDim,border:`1.5px solid ${hasAnamnese?P.cGreenBorder:"rgba(181,88,58,0.3)"}`,borderRadius:14,padding:"16px 18px",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                <span style={{fontSize:24}}>{hasAnamnese?"✅":"📋"}</span>
+                <div>
+                  <p style={{color:hasAnamnese?P.cGreen:P.cTerra,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginBottom:3}}>Questionnaire initial</p>
+                  <p style={{color:P.cText,fontSize:13,fontWeight:500}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</p>
+                </div>
+              </button>
             </div>
           )}
           {clientFolder==="evolution"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("evolution")} style={{width:"100%"}}>Voir mon évolution →</Btn></div>)}
