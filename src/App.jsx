@@ -1306,33 +1306,33 @@ function Cliente({ user, onLogout }) {
           )}
           {clientFolder==="documents"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("docs")} style={{width:"100%"}}>Gérer mes documents →</Btn></div>)}
           {clientFolder==="questionnaire"&&(
-            <div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in">
-              <Btn variant="cPrimary" onClick={()=>setAnamneseView(true)} style={{width:"100%",marginBottom:16}}>{hasAnamnese?"Modifier mon questionnaire de santé →":"Remplir mon questionnaire de santé →"}</Btn>
-              <div style={{borderTop:`1px solid ${P.cBorder}`,paddingTop:16}}>
-                <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:12}}>Suivi par consultation</p>
-                <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {[1,2,3,4,5,6].map(n=>{
-                    const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
-                    const prevDone=n===1||suiviRdvList.some(s=>Number(s.numRdv)===n-1);
-                    const locked=!prevDone&&!done;
-                    return(
-                      <button key={n} onClick={()=>{if(locked)return;setSuiviRdvNum(n);setSuiviRdvView(true);}}
-                        style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderRadius:12,border:`1.5px solid ${done?P.cGreenBorder:locked?"rgba(44,28,12,0.08)":P.cBorder}`,background:done?P.cGreenDim:locked?"rgba(44,28,12,0.03)":"transparent",cursor:locked?"not-allowed":"pointer",opacity:locked?0.5:1,transition:"all 0.2s"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10}}>
-                          <span style={{fontSize:16}}>{done?"✅":locked?"🔒":"📋"}</span>
-                          <div style={{textAlign:"left"}}>
-                            <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cText,fontSize:13,fontWeight:done?600:400}}>Consultation {n}</p>
-                            {done&&<p style={{color:P.cGreen,fontSize:11,marginTop:1}}>Rempli ✓</p>}
-                            {locked&&<p style={{color:P.cTextDim,fontSize:11,marginTop:1}}>Remplis d'abord la consultation {n-1}</p>}
-                            {!done&&!locked&&<p style={{color:P.cTextDim,fontSize:11,marginTop:1}}>À remplir avant le rendez-vous</p>}
-                          </div>
-                        </div>
-                        {!locked&&<span style={{color:done?P.cGreen:P.cTextDim,fontSize:16}}>›</span>}
-                      </button>
-                    );
-                  })}
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}} className="fade-in">
+              <button onClick={()=>setAnamneseView(true)} style={{width:"100%",background:hasAnamnese?P.cGreenDim:P.cTerraDim,border:`1.5px solid ${hasAnamnese?P.cGreenBorder:"rgba(181,88,58,0.3)"}`,borderRadius:14,padding:"16px 18px",textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}>
+                <span style={{fontSize:24}}>{hasAnamnese?"✅":"📋"}</span>
+                <div>
+                  <p style={{color:hasAnamnese?P.cGreen:P.cTerra,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginBottom:3}}>Questionnaire initial</p>
+                  <p style={{color:P.cText,fontSize:13,fontWeight:500}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</p>
                 </div>
-              </div>
+              </button>
+              <p style={{color:P.cTextDim,fontSize:11,textTransform:"uppercase",letterSpacing:"1.5px",marginTop:4,marginBottom:0,paddingLeft:4}}>Suivi par consultation</p>
+              {[1,2,3,4,5,6].map(n=>{
+                const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
+                const prevDone=n===1||suiviRdvList.some(s=>Number(s.numRdv)===n-1);
+                const locked=!prevDone&&!done;
+                return(
+                  <button key={n} onClick={()=>{if(locked)return;setSuiviRdvNum(n);setSuiviRdvView(true);}}
+                    style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",borderRadius:12,border:`1.5px solid ${done?P.cGreenBorder:locked?"rgba(44,28,12,0.08)":P.cBorder}`,background:done?P.cGreenDim:locked?"rgba(44,28,12,0.03)":P.cSurface,cursor:locked?"not-allowed":"pointer",opacity:locked?0.5:1,transition:"all 0.2s",textAlign:"left"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <span style={{fontSize:18}}>{done?"✅":locked?"🔒":"📋"}</span>
+                      <div>
+                        <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cText,fontSize:13,fontWeight:done?600:500}}>Consultation {n}</p>
+                        <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cTextMid,fontSize:11,marginTop:2}}>{done?"Rempli ✓":locked?`Remplis d'abord la consultation ${n-1}`:"À remplir avant le rendez-vous"}</p>
+                      </div>
+                    </div>
+                    {!locked&&<span style={{color:done?P.cGreen:P.cTextDim,fontSize:18}}>›</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
           {clientFolder==="evolution"&&(<div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:16}} className="fade-in"><Btn variant="cPrimary" onClick={()=>setView("evolution")} style={{width:"100%"}}>Voir mon évolution →</Btn></div>)}
