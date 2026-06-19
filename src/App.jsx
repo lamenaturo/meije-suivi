@@ -1126,6 +1126,7 @@ function Cliente({ user, onLogout }) {
   const [suiviRdvView,setSuiviRdvView]=useState(false);
   const [suiviRdvNum,setSuiviRdvNum]=useState(null);
   const [suiviRdvList,setSuiviRdvList]=useState([]);
+  const [selectedProtocole,setSelectedProtocole]=useState(null);
   const showToast=useCallback((msg)=>setToast(msg),[]);
 
   useEffect(()=>{
@@ -1319,28 +1320,41 @@ function Cliente({ user, onLogout }) {
           <p style={{color:P.cTextDim,fontSize:12,marginBottom:20}}>Tes protocoles personnalisés, consultation après consultation</p>
           {protocoles.length===0
             ? <EmptyState message="Ton protocole personnalisé apparaîtra ici après votre première consultation 🌿" theme="c"/>
-            : [...protocoles].reverse().map((p,i)=>(
-                <div key={p.id} style={{background:P.cSurface,borderRadius:14,border:`1px solid ${P.cBorder}`,marginBottom:12,overflow:"hidden"}}>
-                  <button onClick={()=>setClientFolder(clientFolder===`proto_${i}`?null:`proto_${i}`)}
-                    style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 18px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+            : <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {[...protocoles].reverse().map((p,i)=>(
+                  <button key={p.id} onClick={()=>{setSelectedProtocole(p);setView("protocoleDetail");}}
+                    style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 18px",borderRadius:12,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left"}}>
                     <div style={{display:"flex",alignItems:"center",gap:12}}>
-                      <span style={{fontSize:20}}>🌿</span>
+                      <span style={{fontSize:18}}>🌿</span>
                       <div>
-                        <p style={{color:P.cText,fontFamily:P.serif,fontSize:17,fontWeight:400}}>{p.titre}</p>
-                        <p style={{color:P.cTextDim,fontSize:11,marginTop:2}}>{new Date(p.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+                        <p style={{color:P.cGreen,fontSize:13,fontWeight:600}}>{p.titre}</p>
+                        <p style={{color:P.cTextMid,fontSize:11,marginTop:2}}>{new Date(p.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
                       </div>
                     </div>
-                    <span style={{color:P.cTextDim,fontSize:18,transform:clientFolder===`proto_${i}`?"rotate(180deg)":"none",transition:"transform 0.2s",display:"block"}}>▾</span>
+                    <span style={{color:P.cGreen,fontSize:18}}>›</span>
                   </button>
-                  {clientFolder===`proto_${i}`&&(
-                    <div style={{padding:"0 18px 18px",borderTop:`1px solid ${P.cBorder}`}} className="fade-in">
-                      <p style={{color:P.cTextMid,fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap",paddingTop:14}}>{p.contenu}</p>
-                      {p.fichiers?.length>0&&<div style={{marginTop:12,display:"flex",flexWrap:"wrap",gap:8}}>{p.fichiers.map((f,j)=><a key={j} href={f.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"8px 14px",color:P.cGreen,fontSize:12,textDecoration:"none"}}><span>{f.type?.includes("pdf")?"📄":"🖼"}</span><span>{f.name}</span></a>)}</div>}
-                    </div>
-                  )}
-                </div>
-              ))
+                ))}
+              </div>
           }
+        </div>
+      )}
+
+      {view==="protocoleDetail"&&selectedProtocole&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>{setView("protocoles");setSelectedProtocole(null);}} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour aux protocoles</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:4}}>{selectedProtocole.titre}</p>
+          <p style={{color:P.cTextDim,fontSize:12,marginBottom:20}}>{new Date(selectedProtocole.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+          <div style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:14,padding:"20px"}}>
+            <p style={{color:P.cTextMid,fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{selectedProtocole.contenu}</p>
+            {selectedProtocole.fichiers?.length>0&&(
+              <div style={{marginTop:16,paddingTop:16,borderTop:`1px solid ${P.cBorder}`}}>
+                <p style={{color:P.cTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"1px",marginBottom:8}}>Fichiers joints</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {selectedProtocole.fichiers.map((f,j)=><a key={j} href={f.url} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"8px 14px",color:P.cGreen,fontSize:12,textDecoration:"none"}}><span>{f.type?.includes("pdf")?"📄":"🖼"}</span><span>{f.name}</span></a>)}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1348,8 +1362,23 @@ function Cliente({ user, onLogout }) {
         <div style={inner} className="fade-in">
           <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
           <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Mes suivis</p>
-          {/* Suivi hebdomadaire */}
-          <p style={{color:P.cTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"2px",marginBottom:10}}>Suivi hebdomadaire</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
+            <button onClick={()=>setView("suivisHebdo")} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"24px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer"}}>
+              <span style={{fontSize:28}}>📝</span>
+              <p style={{color:P.cTextMid,fontSize:13,fontWeight:500,textAlign:"center"}}>Hebdomadaire</p>
+            </button>
+            <button onClick={()=>setView("suivisMensuel")} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"24px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer"}}>
+              <span style={{fontSize:28}}>📅</span>
+              <p style={{color:P.cTextMid,fontSize:13,fontWeight:500,textAlign:"center"}}>Mensuel</p>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {view==="suivisHebdo"&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>setView("suivis")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Suivi hebdomadaire</p>
           <button onClick={()=>setView("suivi")} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"16px 18px",borderRadius:14,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left",marginBottom:8}}>
             <span style={{fontSize:22}}>📝</span>
             <div>
@@ -1357,9 +1386,14 @@ function Cliente({ user, onLogout }) {
               <p style={{color:P.cTextMid,fontSize:11,marginTop:2}}>{wk()}</p>
             </div>
           </button>
-          {entries.length>0&&<button onClick={()=>setView("historique")} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:`1px solid ${P.cBorder}`,background:P.cSurface,cursor:"pointer",textAlign:"left",marginBottom:20}}><span style={{fontSize:16}}>📊</span><p style={{color:P.cTextMid,fontSize:13}}>Voir mon historique</p></button>}
-          {/* Suivi par consultation */}
-          <p style={{color:P.cTextDim,fontSize:10,textTransform:"uppercase",letterSpacing:"2px",marginBottom:10}}>Suivi par consultation</p>
+          {entries.length>0&&<button onClick={()=>setView("historique")} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderRadius:12,border:`1px solid ${P.cBorder}`,background:P.cSurface,cursor:"pointer",textAlign:"left"}}><span style={{fontSize:16}}>📊</span><p style={{color:P.cTextMid,fontSize:13}}>Voir mon historique</p></button>}
+        </div>
+      )}
+
+      {view==="suivisMensuel"&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>setView("suivis")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Suivi mensuel — par consultation</p>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {[1,2,3,4,5,6].map(n=>{
               const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
