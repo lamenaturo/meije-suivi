@@ -1100,9 +1100,7 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
 // ─── ESPACE CLIENTE ───────────────────────────────────────────────────────────
 const CLIENT_NAV = [
   { key:"home", label:"Accueil", icon:"🏠" },
-  { key:"suivi", label:"Suivi", icon:"📝" },
-  { key:"evolution", label:"Évolution", icon:"📈" },
-  { key:"protocole", label:"Protocole", icon:"🌿" },
+  { key:"protocoles", label:"Protocole", icon:"🌿" },
   { key:"moi", label:"Mon dossier", icon:"👤" },
 ];
 
@@ -1575,7 +1573,7 @@ function Cliente({ user, onLogout }) {
         </div>
       )}
 
-      <BottomNav items={CLIENT_NAV.map(item=>{let badge=0;if(item.key==="home"){if(lm&&Date.now()-new Date(lm.date).getTime()<7*24*60*60*1000)badge=1;if(protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000)badge++;}if(item.key==="protocole"&&protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000)badge=1;return{...item,badge};})} active={view} onChange={setView} theme="c"/>
+      <BottomNav items={CLIENT_NAV.map(item=>{let badge=0;if(item.key==="home"){if(lm&&Date.now()-new Date(lm.date).getTime()<7*24*60*60*1000)badge=1;if(protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000)badge++;}if(item.key==="protocoles"&&protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000)badge=1;return{...item,badge};})} active={view} onChange={setView} theme="c"/>
     </div>
   );
 }
