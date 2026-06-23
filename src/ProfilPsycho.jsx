@@ -105,6 +105,19 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
     return () => clearTimeout(timer);
   }, [scores, genre, loading]);
 
+  const saveNow = async () => {
+    if (!genre || !Object.values(scores).some(Boolean)) return;
+    try {
+      await setDoc(doc(db, "profils_psycho", docId), {
+        userUid: user.uid, userEmail: user.email,
+        userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "",
+        genre, scores, date: new Date().toISOString(),
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const handleRetour = async () => { await saveNow(); onDone(); };
+
   const profilsDef = genre === "Homme" ? PROFILS_HOMME : PROFILS_FEMME;
   const profilScores = profilsDef.map(p => ({
     key: p.key, label: p.label, icon: p.icon,
@@ -115,7 +128,7 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
     <div style={{ background: C.bg, minHeight: "100vh", fontFamily: "DM Sans, sans-serif" }}>
       <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "16px 20px", position: "sticky", top: 0, zIndex: 5 }}>
         <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <button onClick={onDone} style={{ background: "none", border: "none", color: C.textMid, fontSize: 13, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>← Retour</button>
+          <button onClick={handleRetour} style={{ background: "none", border: "none", color: C.textMid, fontSize: 13, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>← Retour</button>
           {saving && <span style={{ color: C.textDim, fontSize: 11 }}>Enregistrement…</span>}
           {!saving && saved && <span style={{ color: C.sage, fontSize: 11 }}>✓ Enregistré</span>}
         </div>
