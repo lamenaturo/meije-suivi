@@ -1358,7 +1358,7 @@ function Cliente({ user, onLogout }) {
             ].map(({key,icon,label,badge})=>{
               const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivis",evolution:"evolution",documents:"docs",messages:"messages",profilpsycho:"profilpsycho"};
               return(
-                <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)"}}>
+                <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)", ...(key==="profilpsycho"?{gridColumn:"1 / -1"}:{})}}>
                   {badge&&<span style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:P.cTerra}}/>}
                   <span style={{fontSize:28}}>{icon}</span>
                   <p style={{color:P.cTextMid,fontSize:12,fontWeight:400,textAlign:"center",letterSpacing:"0.3px"}}>{label}</p>
