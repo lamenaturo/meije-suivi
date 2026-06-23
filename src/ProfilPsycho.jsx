@@ -78,7 +78,10 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
           const data = snap.data();
           setScores(data.scores || {});
           if (data.genre) setGenre(data.genre);
+          else if (genreConnu) setGenre(genreConnu);
           setSaved(true);
+        } else if (genreConnu) {
+          setGenre(genreConnu);
         }
       } catch (e) { console.error(e); }
       setLoading(false);
@@ -105,18 +108,20 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
     return () => clearTimeout(timer);
   }, [scores, genre, loading]);
 
-  const saveNow = async () => {
-    if (!genre || !Object.values(scores).some(Boolean)) return;
+  const saveNow = async (genreActuel, scoresActuels) => {
+    const g = genreActuel || genre;
+    const s = scoresActuels || scores;
+    if (!g || !Object.values(s).some(Boolean)) return;
     try {
       await setDoc(doc(db, "profils_psycho", docId), {
         userUid: user.uid, userEmail: user.email,
         userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "",
-        genre, scores, date: new Date().toISOString(),
+        genre: g, scores: s, date: new Date().toISOString(),
       });
     } catch (e) { console.error(e); }
   };
 
-  const handleRetour = async () => { await saveNow(); onDone(); };
+  const handleRetour = async () => { await saveNow(genre, scores); onDone(); };
 
   const profilsDef = genre === "Homme" ? PROFILS_HOMME : PROFILS_FEMME;
   const profilScores = profilsDef.map(p => ({
@@ -157,7 +162,10 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
               <ProfilQuestCard key={p.key} title={p.label} icon={p.icon} items={p.items} scores={scores} setScores={setScores} />
             ))}
             {Object.values(scores).some(Boolean) && (
-              <button onClick={() => downloadPDF(genre, scores, user.prénom || user.displayName || user.email?.split("@")[0] || "")} style={{ width: "100%", marginTop: 8, background: C.surface2, border: `1px solid ${C.border2}`, borderRadius: 30, padding: "12px 22px", color: C.textMid, fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>⬇ Télécharger en PDF</button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+                <button onClick={async () => { setSaving(true); await saveNow(genre, scores); setSaved(true); setSaving(false); }} disabled={saving} style={{ width: "100%", background: C.sage, border: "none", borderRadius: 30, padding: "13px 22px", color: "white", fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>{saving ? "Enregistrement…" : saved ? "✓ Enregistré" : "Sauvegarder mon profil"}</button>
+                <button onClick={() => downloadPDF(genre, scores, user.prénom || user.displayName || user.email?.split("@")[0] || "")} style={{ width: "100%", background: C.surface2, border: `1px solid ${C.border2}`, borderRadius: 30, padding: "12px 22px", color: C.textMid, fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>⬇ Télécharger en PDF</button>
+              </div>
             )}
           </>
         )}
