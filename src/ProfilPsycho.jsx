@@ -83,7 +83,6 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
       } catch (e) { console.error(e); }
       setLoading(false);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Autosave dès qu'il y a au moins une réponse cochée
@@ -104,7 +103,6 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
       setSaving(false);
     }, 1200);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scores, genre, loading]);
 
   const profilsDef = genre === "Homme" ? PROFILS_HOMME : PROFILS_FEMME;
