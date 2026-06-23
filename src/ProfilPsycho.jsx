@@ -73,17 +73,21 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
   useEffect(() => {
     (async () => {
       try {
-        const snap = await getDoc(doc(db, "profils_psycho", docId));
-        if (snap.exists()) {
-          const data = snap.data();
-          setScores(data.scores || {});
-          if (data.genre) setGenre(data.genre);
+        // Lecture depuis users/{uid} — toujours accessible, même source que la praticienne
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        const pp = userSnap.data()?.profilPsycho;
+        if (pp) {
+          setScores(pp.scores || {});
+          if (pp.genre) setGenre(pp.genre);
           else if (genreConnu) setGenre(genreConnu);
           setSaved(true);
         } else if (genreConnu) {
           setGenre(genreConnu);
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        if (genreConnu) setGenre(genreConnu);
+      }
       setLoading(false);
     })();
   }, []);
