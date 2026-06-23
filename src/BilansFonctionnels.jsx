@@ -20,8 +20,115 @@ const getInterp = (score, seuils) => {
   return { label: "Peu probable", color: C.sage, bg: C.sageDim, border: "rgba(74,122,90,0.25)" };
 };
 
+export const computeScore = (scores, items) => items.reduce((s, i) => s + ((scores || {})[i.key] ? i.pts : 0), 0);
+export const maxScore = items => items.reduce((s, i) => s + i.pts, 0);
+
+// ─── PROFILS PSYCHO-ÉMOTIONNELS — ITEMS ───────────────────────────────────────
+const ITEMS_PERFECTIONNISTE = [
+  { key: "pp_echec", label: "Tu te sens en échec si tu n'as pas fait les choses \"parfaitement\"", pts: 2 },
+  { key: "pp_autocritique", label: "Tu te critiques sévèrement pour de petites erreurs", pts: 2 },
+  { key: "pp_delegation", label: "Tu as du mal à déléguer, \"personne ne fera aussi bien que toi\"", pts: 1 },
+  { key: "pp_retravaille", label: "Tu retravailles les choses plusieurs fois avant d'être satisfaite", pts: 1 },
+  { key: "pp_digestif", label: "Troubles digestifs ou cycles déréglés en période de stress", pts: 1 },
+  { key: "pp_assezbien", label: "Tu te sens rarement \"assez bien\"", pts: 2 },
+  { key: "pp_compliment", label: "Tu as du mal à recevoir un compliment sans le minimiser", pts: 1 },
+  { key: "pp_repos", label: "Tu repousses le repos tant que \"tout n'est pas fini\"", pts: 1 },
+];
+const ITEMS_CONTROLANTE = [
+  { key: "pc_planifier", label: "Tu as besoin de tout planifier à l'avance", pts: 2 },
+  { key: "pc_imprevu", label: "L'imprévu te met facilement en stress ou en panique", pts: 2 },
+  { key: "pc_listes", label: "Tu as beaucoup de listes / to-do en tête", pts: 1 },
+  { key: "pc_ruminations", label: "Tu \"tournes\" dans ta tête le soir, ruminations", pts: 2 },
+  { key: "pc_reveils", label: "Réveils nocturnes fréquents", pts: 1 },
+  { key: "pc_ventre", label: "Ventre noué, ballonnements liés au stress", pts: 1 },
+  { key: "pc_spm", label: "SPM marqué (irritabilité, tension)", pts: 1 },
+  { key: "pc_lacherprise", label: "Tu as du mal à lâcher les rênes, même en vacances", pts: 1 },
+];
+const ITEMS_SAUVEUSE = [
+  { key: "ps_dirnon", label: "Tu dis \"oui\" alors que tu voudrais dire \"non\"", pts: 2 },
+  { key: "ps_pilier", label: "Tu es souvent celle vers qui les autres se tournent", pts: 1 },
+  { key: "ps_priorites", label: "Tu passes après tout le monde dans tes priorités", pts: 2 },
+  { key: "ps_culpabilite", label: "Tu culpabilises si tu prends du temps pour toi", pts: 2 },
+  { key: "ps_fatigue", label: "Fatigue qui s'installe progressivement, sans \"raison\" claire", pts: 1 },
+  { key: "ps_rdv", label: "Tu repousses tes rdv médicaux ou ton propre repos", pts: 1 },
+  { key: "ps_aide", label: "Tu as du mal à demander de l'aide", pts: 1 },
+  { key: "ps_oubli", label: "Tu t'oublies facilement dans ton quotidien", pts: 1 },
+];
+const ITEMS_CEREBRALE = [
+  { key: "pcer_faim", label: "Tu ne sais pas toujours si tu as faim", pts: 1 },
+  { key: "pcer_limite", label: "Tu réalises que tu es épuisée seulement quand tu es à bout", pts: 2 },
+  { key: "pcer_ressenti", label: "Tu as du mal à décrire ce que tu ressens physiquement", pts: 2 },
+  { key: "pcer_tete", label: "Tu vis beaucoup \"dans ta tête\"", pts: 1 },
+  { key: "pcer_cycle", label: "Tu perds le fil de tes phases de cycle", pts: 1 },
+  { key: "pcer_sommeil", label: "Troubles du sommeil que tu minimises", pts: 1 },
+  { key: "pcer_zen", label: "On te dit que tu parais \"zen\" alors que tu ne te sens pas alignée", pts: 1 },
+  { key: "pcer_signaux", label: "Tu continues de fonctionner même quand ton corps envoie des signaux", pts: 2 },
+];
+const ITEMS_PERFECTIONNISTE_H = [
+  { key: "pph_echec", label: "Tu te mets une pression de réussite constante (travail, sport, vie de famille)", pts: 2 },
+  { key: "pph_autocritique", label: "Tu te juges sévèrement à la moindre erreur", pts: 2 },
+  { key: "pph_delegation", label: "Tu as du mal à déléguer ou demander de l'aide, même débordé", pts: 1 },
+  { key: "pph_repos", label: "Tu repousses le repos tant que \"tout n'est pas réglé\"", pts: 1 },
+  { key: "pph_compliment", label: "Tu as du mal à recevoir un compliment sans le minimiser", pts: 1 },
+  { key: "pph_tension", label: "Tensions ou fatigue liées au stress de performance", pts: 1 },
+  { key: "pph_assezbien", label: "Tu te sens rarement \"assez bien\" dans ce que tu accomplis", pts: 2 },
+  { key: "pph_vacances", label: "Tu as du mal à lâcher prise, même en vacances", pts: 1 },
+];
+const ITEMS_CONTROLANT_H = [
+  { key: "pch_planifier", label: "Tu as besoin de tout anticiper, tout planifier", pts: 2 },
+  { key: "pch_imprevu", label: "L'imprévu te stresse ou t'irrite facilement", pts: 2 },
+  { key: "pch_ruminations", label: "Tu \"tournes\" dans ta tête le soir, difficile de décrocher", pts: 2 },
+  { key: "pch_reveils", label: "Réveils nocturnes ou sommeil léger", pts: 1 },
+  { key: "pch_ventre", label: "Tensions digestives ou maux de ventre liés au stress", pts: 1 },
+  { key: "pch_confiance", label: "Tu as du mal à faire confiance aux autres pour gérer à ta place", pts: 1 },
+  { key: "pch_irritable", label: "Irritabilité quand les choses ne se passent pas comme prévu", pts: 1 },
+  { key: "pch_parallele", label: "Tu gères beaucoup de choses en parallèle sans réussir à ralentir", pts: 1 },
+];
+const ITEMS_SAUVEUR = [
+  { key: "ppv_responsable", label: "Tu te sens responsable de la sécurité matérielle ou émotionnelle de tes proches", pts: 2 },
+  { key: "ppv_besoins", label: "Tu mets tes propres besoins de côté pour ceux des autres", pts: 2 },
+  { key: "ppv_facade", label: "Tu as du mal à montrer que tu vas mal, tu \"tiens\" en façade", pts: 2 },
+  { key: "ppv_culpabilite", label: "Tu culpabilises à l'idée de prendre du temps pour toi", pts: 1 },
+  { key: "ppv_fatigue", label: "Épuisement progressif que tu minimises", pts: 1 },
+  { key: "ppv_rdv", label: "Tu repousses systématiquement tes rdv médicaux ou ton repos", pts: 1 },
+  { key: "ppv_aide", label: "Tu as du mal à demander de l'aide, même en difficulté", pts: 1 },
+  { key: "ppv_pilier", label: "Sentiment d'être \"le pilier\" sans relais", pts: 1 },
+];
+const ITEMS_CEREBRAL_H = [
+  { key: "pcerh_faim", label: "Tu ne sais pas toujours si tu as faim ou besoin de repos", pts: 1 },
+  { key: "pcerh_limite", label: "Tu réalises que tu es épuisé seulement quand tu es à bout", pts: 2 },
+  { key: "pcerh_ressenti", label: "Tu as du mal à mettre des mots sur ce que tu ressens", pts: 2 },
+  { key: "pcerh_tete", label: "Tu vis beaucoup \"dans ta tête\", peu connecté à ton corps", pts: 1 },
+  { key: "pcerh_libido", label: "Baisse de libido ou d'énergie que tu minimises", pts: 1 },
+  { key: "pcerh_sommeil", label: "Troubles du sommeil que tu ne prends pas au sérieux", pts: 1 },
+  { key: "pcerh_calme", label: "On te dit que tu parais \"calme\" ou \"solide\" alors que tu ne te sens pas aligné", pts: 1 },
+  { key: "pcerh_signaux", label: "Tu continues de fonctionner même quand ton corps envoie des signaux d'alerte", pts: 2 },
+];
+
+export const PROFILS_FEMME = [
+  { key: "perfectionniste", label: "Perfectionniste", icon: "🎯", items: ITEMS_PERFECTIONNISTE },
+  { key: "controlante", label: "Contrôlante", icon: "🧩", items: ITEMS_CONTROLANTE },
+  { key: "sauveuse", label: "Sauveuse", icon: "🤲", items: ITEMS_SAUVEUSE },
+  { key: "cerebrale", label: "Cérébrale", icon: "🧠", items: ITEMS_CEREBRALE },
+];
+export const PROFILS_HOMME = [
+  { key: "perfectionniste", label: "Perfectionniste", icon: "🎯", items: ITEMS_PERFECTIONNISTE_H },
+  { key: "controlant", label: "Contrôlant", icon: "🧩", items: ITEMS_CONTROLANT_H },
+  { key: "sauveur", label: "Sauveur", icon: "🤲", items: ITEMS_SAUVEUR },
+  { key: "cerebral", label: "Cérébral", icon: "🧠", items: ITEMS_CEREBRAL_H },
+];
+
+export function getProfilPsychoText(bilanScores, estHomme) {
+  const profils = estHomme ? PROFILS_HOMME : PROFILS_FEMME;
+  const scored = profils.map(p => ({ label: p.label, score: computeScore(bilanScores, p.items), max: maxScore(p.items) }));
+  const top = Math.max(...scored.map(s => s.score));
+  if (top === 0) return "Non évalué";
+  const dominants = scored.filter(s => s.score >= top - 1 && s.score > 0);
+  return dominants.map(s => `${s.label} (${s.score}/${s.max})`).join(", ");
+}
+
 // ─── COMPOSANTS UI ────────────────────────────────────────────────────────────
-const SectionTitle = ({ children, color }) => (
+export const SectionTitle = ({ children, color }) => (
   <h3 style={{ color: color || C.terra, fontSize: 13, fontWeight: 700, textTransform: "uppercase",
     letterSpacing: "0.08em", margin: "20px 0 12px", fontFamily: "DM Sans, sans-serif",
     borderBottom: `1px solid ${C.terraBorder}`, paddingBottom: 6 }}>
@@ -45,7 +152,7 @@ const ScoreBadge = ({ score, max, interp }) => (
   </div>
 );
 
-const ItemCheck = ({ label, points, checked, onChange }) => (
+export const ItemCheck = ({ label, points, checked, onChange }) => (
   <button onClick={() => onChange(!checked)} type="button" style={{
     display: "flex", justifyContent: "space-between", alignItems: "center",
     width: "100%", textAlign: "left", padding: "10px 14px", borderRadius: 10,
@@ -65,7 +172,7 @@ const ItemCheck = ({ label, points, checked, onChange }) => (
   </button>
 );
 
-const QuestCard = ({ title, icon, children, score, max, interp, defaultOpen = false }) => {
+export const QuestCard = ({ title, icon, children, score, max, interp, defaultOpen = false }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{ background: C.surface, borderRadius: 16, border: `1px solid ${C.border2}`,
@@ -102,61 +209,99 @@ const QuestCard = ({ title, icon, children, score, max, interp, defaultOpen = fa
   );
 };
 
+// ─── PROFIL PSYCHO — RÉSUMÉ DOMINANT ─────────────────────────────────────────
+export const ProfilDominantSummary = ({ profils }) => {
+  const maxS = Math.max(...profils.map(p => p.score));
+  if (maxS === 0) return null;
+  const dominants = profils.filter(p => p.score >= maxS - 1 && p.score > 0);
+  const sorted = [...profils].sort((a, b) => b.score - a.score);
+  return (
+    <div style={{ background: C.accentDim, border: "1px solid rgba(138,90,42,0.25)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+      <p style={{ color: C.accent, fontWeight: 700, fontSize: 13, marginBottom: 10, fontFamily: "DM Sans, sans-serif", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        {dominants.length > 1 ? "Profils dominants (mélange)" : "Profil dominant"}
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+        {dominants.map(p => (
+          <span key={p.key} style={{ background: C.terra, color: "white", borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 600, fontFamily: "DM Sans, sans-serif" }}>
+            {p.icon} {p.label}
+          </span>
+        ))}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+        {sorted.map(p => (
+          <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ width: 100, fontSize: 11, color: C.textMid, fontFamily: "DM Sans, sans-serif", flexShrink: 0 }}>{p.icon} {p.label}</span>
+            <div style={{ flex: 1, height: 7, background: C.surface2, borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: `${Math.min(100, (p.score / p.max) * 100)}%`, height: "100%", background: C.terra, borderRadius: 4 }} />
+            </div>
+            <span style={{ fontSize: 11, color: C.textDim, width: 32, textAlign: "right", fontFamily: "DM Sans, sans-serif" }}>{p.score}/{p.max}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const ProfilQuestCard = ({ title, icon, items, scores, setScores }) => {
+  const score = computeScore(scores, items);
+  const max = maxScore(items);
+  const interp = getInterp(score, [Math.ceil(max * 0.35), Math.ceil(max * 0.65), "Profil présent, non dominant", "Profil probablement dominant"]);
+  interp.bilans = score === 0 ? "" : score < Math.ceil(max * 0.65)
+    ? "Présent — à garder en tête sans le nommer comme central"
+    : "À nommer en consultation — oriente la posture et le rythme du protocole";
+  return (
+    <QuestCard title={title} icon={icon} score={score} max={max} interp={interp}>
+      <div style={{ marginTop: 14 }}>
+        {items.map(i => <ItemCheck key={i.key} label={i.label} points={i.pts} checked={!!scores[i.key]} onChange={v => setScores(p => ({ ...p, [i.key]: v }))} />)}
+      </div>
+    </QuestCard>
+  );
+};
+
 // ─── LOGIQUE DE DÉCLENCHEMENT ─────────────────────────────────────────────────
 export const getBilansDeclenchesFemme = (form) => {
   const declenchees = [];
-  // SOPK
   if (hasArr(form.regulariteCycle, "Cycle irrégulier", "Absence de règles (aménorrhée)", "Règles très espacées (>35 jours)")
     || hasArr(form.symptomesHormonaux, "Acné (visage, dos, poitrine)", "Pilosité excessive (visage, corps)", "Chute de cheveux")
     || hasArr(form.habitudesAlimentaires, "J'ai des fringales")
     || hasArr(form.symptomesSPM, "Fringales (sucre, sel)"))
     declenchees.push("sopk");
-  // Endométriose
   if (numVal(form.intensiteDouleurs) >= 6
     || hasArr(form.inflammationsChroniques, "Douleurs articulaires")
     || hasArr(form.symptomesSPM, "Douleurs abdominales"))
     declenchees.push("endometriose");
-  // Dominance oestrogénique
   if (hasArr(form.symptomesSPM, "Seins douloureux ou gonflés", "Ballonnements, rétention d'eau", "Irritabilité, changements d'humeur")
     || hasArr(form.abondanceRegles, "Abondantes", "Très abondantes (avec caillots)")
     || hasArr(form.symptomesHormonaux, "Seins fibrokystiques"))
     declenchees.push("domEstro");
-  // Déficit progestérone
   if (hasArr(form.regulariteCycle, "Cycle irrégulier", "Règles trop fréquentes (<25 jours)")
     || hasArr(form.symptomesSPM, "Anxiété, tristesse", "Insomnie")
     || (form.faussesCouches && form.faussesCouches.length > 1))
     declenchees.push("defProgeste");
-  // Déficit androgènes femme
   if (hasArr(form.symptomesHormonaux, "Baisse de libido", "Chute de cheveux")
     || hasArr(form.humeurGenerale, "Apathique / manque de motivation", "Plutôt dépressif(ve) / tristesse")
     || (numVal(form.energieMatin) <= 4 && numVal(form.energieMatin) > 0))
     declenchees.push("defAndroFemme");
-  // Fatigue surrénalienne
   if ((numVal(form.energieMatin) <= 4 && numVal(form.energieMatin) > 0)
     || hasArr(form.symptomesFatigue, "Épuisement après un effort léger", "Un besoin de faire des siestes")
     || hasArr(form.difficulteSommeil, "Sommeil léger / non réparateur"))
     declenchees.push("fatigueSurr");
-  // Résistance insuline
   if (hasArr(form.symptomesHormonaux, "Prise de poids", "Acné (visage, dos, poitrine)")
     || hasArr(form.habitudesAlimentaires, "J'ai des fringales")
     || hasArr(form.problemeFertilite, "Oui, SOPK diagnostiqué"))
     declenchees.push("resistInsul");
-  // SIBO
   if (hasArr(form.problemesDigestifs, "Ballonnements", "Gaz intestinaux importants", "Alternance constipation/diarrhée")
     || hasArr(form.antibiotiquesRecents, "Oui, dans les 3 derniers mois", "Oui, dans les 6-12 derniers mois")
     || hasArr(form.antecedentsDigestifs, "SIBO (prolifération bactérienne)", "Colopathie / Intestin irritable"))
     declenchees.push("sibo");
-  // Hyperperméabilité
   if (hasArr(form.maladiesAutoImmunes, "Hashimoto", "Polyarthrite rhumatoïde", "Lupus", "Psoriasis")
     || hasArr(form.intolerancesAlimentaires, "Gluten", "Lactose / Produits laitiers", "Œufs", "Fruits à coque")
     || form.infect_candidose === "Oui")
     declenchees.push("hyperPerm");
-  // Déficit fer
   if (hasArr(form.abondanceRegles, "Abondantes", "Très abondantes (avec caillots)")
     || hasArr(form.symptomesHormonaux, "Chute de cheveux")
     || hasArr(form.symptomesFatigue, "Épuisement après un effort léger"))
     declenchees.push("defFer");
-  // Histamine
   if (hasArr(form.allergies, "Pollens / Rhume des foins")
     || hasArr(form.symptomesSPM, "Maux de tête / Migraines")
     || hasArr(form.intolerancesAlimentaires, "Histamine")
@@ -168,36 +313,28 @@ export const getBilansDeclenchesFemme = (form) => {
 
 export const getBilansDeclenchesHomme = (form) => {
   const declenchees = [];
-  // Déficit testostérone
   if ((numVal(form.libido) <= 4 && numVal(form.libido) > 0)
     || (numVal(form.vitaliteGenerale) <= 4 && numVal(form.vitaliteGenerale) > 0)
     || form.masseMuscuDifficulte?.includes("Oui"))
     declenchees.push("defTesto");
-  // Dominance oestrogénique homme
   if (hasArr(form.humeurHomme, "Irritabilité ou agressivité accrue", "Anxiété ou nervosité inhabituelle")
     || hasArr(form.symptomesFatigue, "Épuisement après un effort léger"))
     declenchees.push("domEstroH");
-  // Fatigue surrénalienne
   if ((numVal(form.energieMatin) <= 4 && numVal(form.energieMatin) > 0)
     || hasArr(form.symptomesFatigue, "Épuisement après un effort léger", "Un besoin de faire des siestes"))
     declenchees.push("fatigueSurr");
-  // Résistance insuline
   if (hasArr(form.habitudesAlimentaires, "J'ai des fringales")
     || hasArr(form.symptomesFatigue, "Difficulté à te concentrer par fatigue"))
     declenchees.push("resistInsul");
-  // SIBO
   if (hasArr(form.problemesDigestifs, "Ballonnements", "Gaz intestinaux importants")
     || hasArr(form.antibiotiquesRecents, "Oui, dans les 3 derniers mois", "Oui, dans les 6-12 derniers mois"))
     declenchees.push("sibo");
-  // Hyperperméabilité
   if (hasArr(form.maladiesAutoImmunes, "Hashimoto", "Polyarthrite rhumatoïde", "Lupus", "Psoriasis")
     || hasArr(form.intolerancesAlimentaires, "Gluten", "Lactose / Produits laitiers"))
     declenchees.push("hyperPerm");
-  // Déficit fer
   if (hasArr(form.symptomesFatigue, "Épuisement après un effort léger")
     || hasArr(form.regimeAlimentaire, "Végétarien", "Végétalien / Vegan"))
     declenchees.push("defFer");
-  // Histamine
   if (hasArr(form.allergies, "Pollens / Rhume des foins")
     || hasArr(form.intolerancesAlimentaires, "Histamine")
     || hasArr(form.problemesPeau, "Rosacée", "Urticaire")
@@ -430,11 +567,9 @@ function QuestResistInsul({ scores, setScores }) {
 }
 
 function QuestSibo({ scores, setScores, form }) {
-  // Score antibio basé sur les champs histoire infectieuse
   const antibioTotal = form?.infect_antibio_total || "";
   const antibioRecente = form?.infect_antibio_derniere || "";
   const antibioPoints = (antibioTotal === "Plus de 10" || antibioTotal === "4 à 10") ? 2 : 0;
-  // Antibio récente < 12 mois — on check si la date contient l'année en cours ou l'année passée
   const now = new Date();
   const recentYear = antibioRecente && (antibioRecente.includes(String(now.getFullYear())) || antibioRecente.includes(String(now.getFullYear() - 1)));
   const antibioRecentePoints = recentYear ? 2 : 0;
@@ -525,8 +660,6 @@ function QuestDefFer({ scores, setScores }) {
   );
 }
 
-// ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────────────────
-
 function QuestHistamine({ scores, setScores }) {
   const items = [
     { key: "hi_migraines", label: "Maux de tête / migraines après certains aliments", pts: 2 },
@@ -569,7 +702,6 @@ export default function BilansFonctionnels({ form, bilanScores, setBilanScores }
     estHomme ? getBilansDeclenchesHomme(form) : getBilansDeclenchesFemme(form),
     [form, estHomme]
   );
-
 
   if (declenchees.length === 0) {
     return (
