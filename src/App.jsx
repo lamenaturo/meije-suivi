@@ -2400,9 +2400,10 @@ function Praticienne({ user, onLogout }) {
           {/* ── ONGLET PROFIL PSYCHO-ÉMOTIONNEL ── */}
           {activeTab==="profilpsycho"&&(
             <div>
-              {!profilPsycho?<EmptyState message={`${selected.prenom} n'a pas encore rempli son profil psycho-émotionnel.`} theme="p"/>:(()=>{
-                const profilsDef=profilPsycho.genre==="Homme"?PROFILS_HOMME:PROFILS_FEMME;
-                const scores=profilPsycho.scores||{};
+              {!clientData?.profilPsycho?<EmptyState message={`${selected.prenom} n'a pas encore rempli son profil psycho-émotionnel.`} theme="p"/>:(()=>{
+                const pp=clientData.profilPsycho;
+                const profilsDef=pp.genre==="Homme"?PROFILS_HOMME:PROFILS_FEMME;
+                const scores=pp.scores||{};
                 const profilScores=profilsDef.map(p=>{
                   const max=p.items.reduce((s,i)=>s+i.pts,0);
                   const score=p.items.reduce((s,i)=>s+(scores[i.key]?i.pts:0),0);
@@ -2411,8 +2412,8 @@ function Praticienne({ user, onLogout }) {
                 return(
                   <div>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                      <p style={{color:P.pTextDim,fontSize:12}}>Dernière mise à jour le {new Date(profilPsycho.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
-                      <Btn onClick={()=>downloadProfilPsychoPDF(profilPsycho,selected.prenom)} variant="ghost" theme="p" small>⬇ PDF</Btn>
+                      <p style={{color:P.pTextDim,fontSize:12}}>Dernière mise à jour le {new Date(pp.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+                      <Btn onClick={()=>downloadProfilPsychoPDF(pp,selected.prenom)} variant="ghost" theme="p" small>⬇ PDF</Btn>
                     </div>
                     <ProfilDominantSummary profils={profilScores}/>
                     {profilsDef.map(p=>{
