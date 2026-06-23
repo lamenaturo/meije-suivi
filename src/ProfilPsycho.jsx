@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { ProfilDominantSummary, ProfilQuestCard, PROFILS_FEMME, PROFILS_HOMME } from "./BilansFonctionnels";
@@ -66,70 +66,81 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
   const [genre, setGenre] = useState(genreConnu || "");
   const [scores, setScores] = useState({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const docId = `profil_${user.uid}`;
 
+  // Ref pour toujours avoir les dernières valeurs en closure
+  const scoresRef = useRef(scores);
+  const genreRef = useRef(genre);
+  useEffect(() => { scoresRef.current = scores; }, [scores]);
+  useEffect(() => { genreRef.current = genre; }, [genre]);
+
+  // Chargement : essaie users/{uid} d'abord, puis profils_psycho en fallback
   useEffect(() => {
     (async () => {
       try {
-        // Lecture depuis users/{uid} — toujours accessible, même source que la praticienne
+        // Source 1 : users/{uid}.profilPsycho
         const userSnap = await getDoc(doc(db, "users", user.uid));
         const pp = userSnap.data()?.profilPsycho;
-        if (pp) {
-          setScores(pp.scores || {});
+        if (pp && pp.scores && Object.keys(pp.scores).length > 0) {
+          setScores(pp.scores);
           if (pp.genre) setGenre(pp.genre);
           else if (genreConnu) setGenre(genreConnu);
-          setSaved(true);
-        } else if (genreConnu) {
-          setGenre(genreConnu);
+          setLoading(false);
+          return;
         }
+        // Source 2 : profils_psycho/{docId} (fallback)
+        const profSnap = await getDoc(doc(db, "profils_psycho", docId));
+        if (profSnap.exists()) {
+          const data = profSnap.data();
+          if (data.scores && Object.keys(data.scores).length > 0) {
+            setScores(data.scores);
+            if (data.genre) setGenre(data.genre);
+            else if (genreConnu) setGenre(genreConnu);
+            setLoading(false);
+            return;
+          }
+        }
+        // Rien trouvé
+        if (genreConnu) setGenre(genreConnu);
       } catch (e) {
-        console.error(e);
+        console.error("ProfilPsycho load error:", e);
         if (genreConnu) setGenre(genreConnu);
       }
       setLoading(false);
     })();
   }, []);
 
-  // Autosave dès qu'il y a au moins une réponse cochée
-  useEffect(() => {
-    if (loading || !genre) return;
-    const hasAtLeastOne = Object.values(scores).some(Boolean);
-    if (!hasAtLeastOne) return;
-    const timer = setTimeout(async () => {
-      setSaving(true);
-      try {
-        await setDoc(doc(db, "profils_psycho", docId), {
-          userUid: user.uid, userEmail: user.email,
-          userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "",
-          genre, scores, date: new Date().toISOString(),
-        });
-        await updateDoc(doc(db, "users", user.uid), { profilPsycho: { genre, scores, date: new Date().toISOString() } });
-        setSaved(true);
-      } catch (e) { console.error(e); }
-      setSaving(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [scores, genre, loading]);
-
-  const saveNow = async (genreActuel, scoresActuels) => {
-    const g = genreActuel || genre;
-    const s = scoresActuels || scores;
-    if (!g || !Object.values(s).some(Boolean)) return;
-    const payload = {
-      userUid: user.uid, userEmail: user.email,
-      userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "",
-      genre: g, scores: s, date: new Date().toISOString(),
-    };
-    try {
-      await setDoc(doc(db, "profils_psycho", docId), payload);
-      // Copie dans users/{uid} pour lecture praticienne via listener u0
-      await updateDoc(doc(db, "users", user.uid), { profilPsycho: { genre: g, scores: s, date: new Date().toISOString() } });
-    } catch (e) { console.error(e); }
+  // Sauvegarde dans les deux collections
+  const persist = async (g, s) => {
+    if (!g || !s || !Object.values(s).some(Boolean)) return;
+    const date = new Date().toISOString();
+    const prenom = user.prénom || user.displayName || user.email?.split("@")[0] || "";
+    // Toujours écrire dans profils_psycho (le client peut y écrire)
+    setDoc(doc(db, "profils_psycho", docId), {
+      userUid: user.uid, userEmail: user.email, userPrenom: prenom,
+      genre: g, scores: s, date,
+    }).catch(e => console.error("save profils_psycho:", e));
+    // Essai dans users/{uid} pour la praticienne
+    updateDoc(doc(db, "users", user.uid), {
+      profilPsycho: { genre: g, scores: s, date },
+    }).catch(e => console.error("save users profilPsycho:", e));
+    setSaved(true);
   };
 
-  const handleRetour = async () => { await saveNow(genre, scores); onDone(); };
+  // Sauvegarde à chaque changement de scores (immédiat, sans debounce)
+  const handleScoreChange = (newScores) => {
+    setScores(newScores);
+    if (genreRef.current) {
+      persist(genreRef.current, newScores);
+    }
+  };
+
+  const handleRetour = () => {
+    // Sauvegarde finale avec les refs (valeurs toujours à jour)
+    persist(genreRef.current, scoresRef.current);
+    onDone();
+  };
 
   const profilsDef = genre === "Homme" ? PROFILS_HOMME : PROFILS_FEMME;
   const profilScores = profilsDef.map(p => ({
@@ -137,13 +148,21 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
     score: computeScore(scores, p.items), max: maxScore(p.items),
   }));
 
+  // Wrapper setScores pour intercepter les changements
+  const setScoresIntercepted = (updater) => {
+    setScores(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      if (genreRef.current) persist(genreRef.current, next);
+      return next;
+    });
+  };
+
   return (
     <div style={{ background: C.bg, minHeight: "100vh", fontFamily: "DM Sans, sans-serif" }}>
       <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "16px 20px", position: "sticky", top: 0, zIndex: 5 }}>
         <div style={{ maxWidth: 600, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <button onClick={handleRetour} style={{ background: "none", border: "none", color: C.textMid, fontSize: 13, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>← Retour</button>
-          {saving && <span style={{ color: C.textDim, fontSize: 11 }}>Enregistrement…</span>}
-          {!saving && saved && <span style={{ color: C.sage, fontSize: 11 }}>✓ Enregistré</span>}
+          {saved && <span style={{ color: C.sage, fontSize: 11 }}>✓ Enregistré</span>}
         </div>
       </div>
 
@@ -153,12 +172,12 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
           Le stress chronique ne s'exprime pas de la même façon chez tout le monde. Coche ce qui te parle dans chaque description ci-dessous — la plupart des gens se reconnaissent dans un mélange, avec une dominante. Il n'y a pas de bonne ou mauvaise réponse, et ça m'aide à adapter ma posture et le rythme de ton accompagnement.
         </p>
 
-        {!genre && (
+        {!genre && !loading && (
           <div style={{ background: C.terraDim, border: `1px solid ${C.terraBorder}`, borderRadius: 14, padding: "18px 20px", marginBottom: 20 }}>
             <p style={{ color: C.text, fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Avant de commencer, dis-moi :</p>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setGenre("Femme")} style={{ flex: 1, padding: "12px 16px", borderRadius: 10, border: `1px solid ${C.border2}`, background: C.surface, color: C.text, fontSize: 14, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>Je suis une femme</button>
-              <button onClick={() => setGenre("Homme")} style={{ flex: 1, padding: "12px 16px", borderRadius: 10, border: `1px solid ${C.border2}`, background: C.surface, color: C.text, fontSize: 14, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>Je suis un homme</button>
+              <button onClick={() => { setGenre("Femme"); genreRef.current = "Femme"; }} style={{ flex: 1, padding: "12px 16px", borderRadius: 10, border: `1px solid ${C.border2}`, background: C.surface, color: C.text, fontSize: 14, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>Je suis une femme</button>
+              <button onClick={() => { setGenre("Homme"); genreRef.current = "Homme"; }} style={{ flex: 1, padding: "12px 16px", borderRadius: 10, border: `1px solid ${C.border2}`, background: C.surface, color: C.text, fontSize: 14, cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}>Je suis un homme</button>
             </div>
           </div>
         )}
@@ -167,11 +186,10 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
           <>
             <ProfilDominantSummary profils={profilScores} />
             {profilsDef.map(p => (
-              <ProfilQuestCard key={p.key} title={p.label} icon={p.icon} items={p.items} scores={scores} setScores={setScores} />
+              <ProfilQuestCard key={p.key} title={p.label} icon={p.icon} items={p.items} scores={scores} setScores={setScoresIntercepted} />
             ))}
             {Object.values(scores).some(Boolean) && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-                <button onClick={async () => { setSaving(true); await saveNow(genre, scores); setSaved(true); setSaving(false); }} disabled={saving} style={{ width: "100%", background: C.sage, border: "none", borderRadius: 30, padding: "13px 22px", color: "white", fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>{saving ? "Enregistrement…" : saved ? "✓ Enregistré" : "Sauvegarder mon profil"}</button>
                 <button onClick={() => downloadPDF(genre, scores, user.prénom || user.displayName || user.email?.split("@")[0] || "")} style={{ width: "100%", background: C.surface2, border: `1px solid ${C.border2}`, borderRadius: 30, padding: "12px 22px", color: C.textMid, fontFamily: "DM Sans, sans-serif", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>⬇ Télécharger en PDF</button>
               </div>
             )}
