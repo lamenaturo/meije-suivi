@@ -3,6 +3,8 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, on
 import { collection, addDoc, doc, setDoc, getDoc, getDocs, query, orderBy, where, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import Anamnese from "./Anamnese";
+import ProfilPsycho from "./ProfilPsycho";
+import { ProfilDominantSummary, PROFILS_FEMME, PROFILS_HOMME } from "./BilansFonctionnels";
 import { getSystemClient, getSystemPraticienne } from "./normes";
 
 const PRATICIENNE_EMAIL = process.env.REACT_APP_PRATICIENNE_EMAIL || "lamenaturo@gmail.com";
@@ -846,6 +848,70 @@ ${rows.map(([label, val]) => `<div class="row"><span class="label">${label}</spa
   setTimeout(() => URL.revokeObjectURL(url), 3000);
 };
 
+// ─── PDF PROFIL PSYCHO-ÉMOTIONNEL ──────────────────────────────────────────────
+const downloadProfilPsychoPDF = (profilData, prenom) => {
+  const date = new Date(profilData.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const profilsDef = profilData.genre === "Homme" ? PROFILS_HOMME : PROFILS_FEMME;
+  const scores = profilData.scores || {};
+  const profilScores = profilsDef.map(p => {
+    const max = p.items.reduce((s, i) => s + i.pts, 0);
+    const score = p.items.reduce((s, i) => s + (scores[i.key] ? i.pts : 0), 0);
+    return { ...p, score, max };
+  });
+  const maxS = Math.max(...profilScores.map(p => p.score));
+  const dominants = profilScores.filter(p => p.score >= maxS - 1 && p.score > 0);
+  const sections = profilScores.map(p => {
+    const checked = p.items.filter(i => scores[i.key]);
+    if (checked.length === 0) return "";
+    return `<div class="profil"><h2>${p.icon} ${p.label} — ${p.score}/${p.max}</h2><ul>${checked.map(i => `<li>${i.label}</li>`).join("")}</ul></div>`;
+  }).join("");
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Profil psycho-émotionnel — ${prenom}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1C1008; background: #fff; padding: 40px 48px; font-size: 12px; line-height: 1.7; }
+  .header { border-bottom: 2px solid #B5583A; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header h1 { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #B5583A; font-weight: 600; }
+  .header .meta { font-size: 11px; color: rgba(28,16,8,0.5); text-align: right; }
+  .dominant { background: rgba(181,88,58,0.08); border: 1px solid rgba(181,88,58,0.25); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; }
+  .dominant p { font-size: 13px; font-weight: 600; color: #B5583A; }
+  .profil { margin-bottom: 18px; }
+  .profil h2 { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: #8A5A2A; font-weight: 600; margin-bottom: 8px; }
+  .profil ul { padding-left: 18px; }
+  .profil li { font-size: 12px; line-height: 1.8; color: #1C1008; }
+  @media print { body { padding: 20px 24px; } @page { margin: 1.5cm; size: A4; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Profil psycho-émotionnel</h1>
+    <p style="font-size:13px;color:rgba(28,16,8,0.6);margin-top:4px;">${prenom}</p>
+  </div>
+  <div class="meta">
+    <p>Meije Delmonte — Naturopathe fonctionnelle</p>
+    <p>Mis à jour le ${date}</p>
+  </div>
+</div>
+<div class="dominant"><p>${dominants.length > 1 ? "Profils dominants" : "Profil dominant"} : ${dominants.map(p => `${p.icon} ${p.label} (${p.score}/${p.max})`).join(", ") || "Non évalué"}</p></div>
+${sections}
+</body>
+</html>`;
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `profil_psycho_${(prenom || "cliente").toLowerCase().replace(/\s+/g, "_")}_${new Date().toISOString().slice(0,10)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
 
 function SuiviRdv({ user, numRdv, existingData, onDone }) {
   const [form, setForm] = useState({
@@ -1125,6 +1191,8 @@ function Cliente({ user, onLogout }) {
   const [suiviRdvNum,setSuiviRdvNum]=useState(null);
   const [suiviRdvList,setSuiviRdvList]=useState([]);
   const [selectedProtocole,setSelectedProtocole]=useState(null);
+  const [profilPsychoView,setProfilPsychoView]=useState(false);
+  const [profilPsychoData,setProfilPsychoData]=useState(null);
   const showToast=useCallback((msg)=>setToast(msg),[]);
 
   useEffect(()=>{
@@ -1146,7 +1214,8 @@ function Cliente({ user, onLogout }) {
     });
     const q7=query(collection(db,"suivis_rdv"),where("userUid","==",user.uid),orderBy("date","asc"));
     const u7=onSnapshot(q7,s=>setSuiviRdvList(s.docs.map(d=>({id:d.id,...d.data()}))));
-    return()=>{u();u2();u3();u4();u5();u6();u7();};
+    const u8=onSnapshot(doc(db,"profils_psycho",`profil_${user.uid}`),snap=>setProfilPsychoData(snap.exists()?snap.data():null),()=>setProfilPsychoData(null));
+    return()=>{u();u2();u3();u4();u5();u6();u7();u8();};
   },[user.uid]);
 
   const lm=messages[messages.length-1];const hasAnamnese=anamneses.length>0;
@@ -1224,6 +1293,7 @@ function Cliente({ user, onLogout }) {
   if(loading)return<div style={{minHeight:"100vh",background:P.cBg,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{fontFamily:P.serif,fontSize:18,color:P.cTextDim,fontWeight:300}}>Chargement…</p></div>;
   if(anamneseView)return<Anamnese user={user} onDone={()=>setAnamneseView(false)} readonly={false} existingData={anamneses[0]}/>;
   if(suiviRdvView&&suiviRdvNum!==null)return<SuiviRdv user={user} numRdv={suiviRdvNum} existingData={suiviRdvList.find(s=>s.numRdv===suiviRdvNum)||null} onDone={()=>{setSuiviRdvView(false);setSuiviRdvNum(null);}} />;
+  if(profilPsychoView)return<ProfilPsycho user={user} onDone={()=>setProfilPsychoView(false)} genreConnu={anamneses[0]?.form?.genre||""}/>;
 
   const pageStyle={minHeight:"100vh",background:P.cBg,paddingBottom:80,fontFamily:P.sans};
   const headerStyle={background:P.cSurface,borderBottom:`1px solid ${P.cBorder}`,padding:"16px 20px 14px",position:"sticky",top:0,zIndex:50};
@@ -1284,8 +1354,9 @@ function Cliente({ user, onLogout }) {
               {key:"evolution",icon:"📈",label:"Mon évolution",badge:false},
               {key:"documents",icon:"📁",label:"Mes documents",badge:false},
               {key:"messages",icon:"💬",label:"Messages",badge:lm&&Date.now()-new Date(lm.date).getTime()<7*24*60*60*1000},
+              {key:"profilpsycho",icon:"🧭",label:"Mon profil",badge:false},
             ].map(({key,icon,label,badge})=>{
-              const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivis",evolution:"evolution",documents:"docs",messages:"messages"};
+              const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivis",evolution:"evolution",documents:"docs",messages:"messages",profilpsycho:"profilpsycho"};
               return(
                 <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)"}}>
                   {badge&&<span style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:P.cTerra}}/>}
@@ -1307,6 +1378,18 @@ function Cliente({ user, onLogout }) {
           <div style={{background:hasAnamnese?P.cGreenDim:P.cTerraDim,border:`1.5px solid ${hasAnamnese?P.cGreenBorder:"rgba(181,88,58,0.3)"}`,borderRadius:14,padding:"4px 14px 10px",marginBottom:12}}>
             <p style={{color:hasAnamnese?P.cGreen:P.cTerra,fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,marginTop:12,marginBottom:8}}>⓵ Étape 1 — Questionnaire initial</p>
             <Btn variant="cPrimary" onClick={()=>setAnamneseView(true)} style={{width:"100%"}}>{hasAnamnese?"Modifier mon questionnaire →":"Remplir mon questionnaire →"}</Btn>
+          </div>
+        </div>
+      )}
+
+      {view==="profilpsycho"&&(
+        <div style={inner} className="fade-in">
+          <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:4}}>Mon profil psycho-émotionnel</p>
+          <p style={{color:P.cTextDim,fontSize:12,marginBottom:20}}>Le stress chronique ne s'exprime pas pareil chez tout le monde — ça aide Meije à adapter ton accompagnement</p>
+          <div style={{background:P.cSurface,borderRadius:16,border:`1px solid ${P.cBorder}`,padding:"20px",marginBottom:12}}>
+            <Btn variant="cPrimary" onClick={()=>setProfilPsychoView(true)} style={{width:"100%",marginBottom:profilPsychoData?12:0}}>{profilPsychoData?"Modifier mon profil →":"Découvrir mon profil →"}</Btn>
+            {profilPsychoData&&<Btn variant="ghost" theme="c" onClick={()=>downloadProfilPsychoPDF(profilPsychoData,user.prénom)} style={{width:"100%"}}>⬇ Télécharger en PDF</Btn>}
           </div>
         </div>
       )}
@@ -1665,6 +1748,7 @@ function Praticienne({ user, onLogout }) {
   const [prescriptionsHistory,setPrescriptionsHistory]=useState([]);
   // Sous-onglet Suivi
   const [suiviSubTab,setSuiviSubTab]=useState("hebdo");
+  const [profilPsycho,setProfilPsycho]=useState(null);
 
   const showToast=useCallback((msg)=>setToast(msg),[]);
   const getDefaultTitre=(prenom,nb)=>`Protocole n°${nb+1} — ${prenom}`;
@@ -1691,7 +1775,7 @@ function Praticienne({ user, onLogout }) {
     if(window._clientUnsubs)window._clientUnsubs.forEach(fn=>fn());
     setSelected(c);setNewMsg("");setActiveTab(tabCible);setAnamneseMode("view");setIaError("");setIaStep("");
     if(sousTabCible)setSuiviSubTab(sousTabCible);
-    setClientData(null);setEntries([]);setMessages([]);setAnamneses([]);setProtocoles([]);setDocuments([]);setNoteHistory([]);setSuivisRdvClient([]);
+    setClientData(null);setEntries([]);setMessages([]);setAnamneses([]);setProtocoles([]);setDocuments([]);setNoteHistory([]);setSuivisRdvClient([]);setProfilPsycho(null);
     setPrescriptions({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
     setPrescriptionsHistory([]);
     setNewProtocole({titre:getDefaultTitre(c.prenom,0),contenu:getDefaultMessage(c.prenom)});
@@ -1724,7 +1808,8 @@ function Praticienne({ user, onLogout }) {
         setPrescriptions({complements:[],evictions:[],bilans:[],autresPoints:"",rdvNum:1});
       }
     },()=>setPrescriptionsHistory([]));
-    window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6,u8,u9];
+    const u10=onSnapshot(doc(db,"profils_psycho",`profil_${c.uid}`),snap=>setProfilPsycho(snap.exists()?snap.data():null),()=>setProfilPsycho(null));
+    window._clientUnsubs=[u0,u1,u2,u3,u4,u5,u6,u8,u9,u10];
     setPrivateNotes("");setMainView("fiche");
   },[]);
 
@@ -2021,9 +2106,9 @@ function Praticienne({ user, onLogout }) {
 
           {/* ── ONGLET DOSSIER ── */}
           {/* ── SOUS-NAV DOSSIER (visible sur toutes les sous-sections) ── */}
-          {["dossier","infos","anamnese","documents","complements"].includes(activeTab)&&(
+          {["dossier","infos","anamnese","profilpsycho","documents","complements"].includes(activeTab)&&(
             <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-              {[{key:"infos",icon:"📋",label:"Infos"},{key:"anamnese",icon:"📄",label:"Anamnèse"},{key:"documents",icon:"📁",label:"Documents"},{key:"complements",icon:"💊",label:"Compléments"}].map(({key,icon,label})=>(
+              {[{key:"infos",icon:"📋",label:"Infos"},{key:"anamnese",icon:"📄",label:"Anamnèse"},{key:"profilpsycho",icon:"🧭",label:"Profil"},{key:"documents",icon:"📁",label:"Documents"},{key:"complements",icon:"💊",label:"Compléments"}].map(({key,icon,label})=>(
                 <button key={key} onClick={()=>setActiveTab(key)} style={{padding:"8px 16px",borderRadius:20,border:`1.5px solid ${activeTab===key?"rgba(200,133,108,0.5)":P.pBorder}`,background:activeTab===key?"rgba(200,133,108,0.1)":P.pSurface,color:activeTab===key?P.pAccent:P.pTextMid,fontFamily:P.sans,fontSize:12,fontWeight:activeTab===key?600:400,cursor:"pointer",display:"flex",alignItems:"center",gap:6,transition:"all 0.2s"}}>
                   <span>{icon}</span>{label}
                 </button>
@@ -2309,6 +2394,42 @@ function Praticienne({ user, onLogout }) {
               </div>
               {anamneseMode==="view"&&(anamneses.length===0?<EmptyState message={`${selected.prenom} n'a pas encore rempli le questionnaire.`} theme="p"/>:anamneses.map(a=>(<div key={a.id}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><p style={{color:P.pTextDim,fontSize:12}}>Rempli le {new Date(a.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}{a.saisieParPraticienne&&<span style={{color:P.pAccent,marginLeft:8}}>· Saisi par toi</span>}</p></div>{a.bilans?.length>0&&<div style={{marginBottom:16}}>{a.bilans.map((b,i)=><a key={i} href={fixPdfUrl(b.url)} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:8,padding:"7px 12px",color:P.pAccent,fontSize:13,textDecoration:"none",marginRight:8,marginBottom:8}}><span>{b.name}</span><span style={{opacity:0.6,fontSize:10}}>↓</span></a>)}</div>}{a.form&&Object.keys(a.form).length>0&&(<div style={{display:"flex",flexDirection:"column",gap:6}}>{[["Genre",a.form.genre],["Problématique principale",a.form.problematique],["Objectifs 3 mois",a.form.objectifs3mois],["Antécédents médicaux",a.form.maladiesChroniques],["Médicaments",a.form.medicaments],["Compléments actuels",a.form.complementsActuels],["Tour de taille",a.form.tourDeTaille&&`${a.form.tourDeTaille} cm`],["Tour de cou",a.form.tourDeCou&&`${a.form.tourDeCou} cm`],["Sommeil",a.form.qualiteSommeil&&`${a.form.qualiteSommeil}/10`],["Stress",a.form.niveauStress&&`${a.form.niveauStress}/10`],["Cycle",a.form.dureeCycle&&`${a.form.dureeCycle}j / règles ${a.form.dureeRegles}j`],["Douleurs",a.form.intensiteDouleurs&&`${a.form.intensiteDouleurs}/10 — ${a.form.descriptionDouleurs}`]].filter(([_,v])=>v).map(([label,val])=>(<div key={label} style={{display:"flex",gap:12,background:P.pSurface2,borderRadius:8,padding:"10px 14px"}}><span style={{color:P.pTextDim,fontSize:12,minWidth:170,flexShrink:0}}>{label}</span><span style={{color:P.pTextMid,fontSize:13,lineHeight:1.5}}>{val}</span></div>))}</div>)}</div>)))}
               {anamneseMode==="upload"&&(<div style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:18}}><input type="file" multiple accept="image/*,application/pdf" onChange={e=>uploadAnamnesePDF(Array.from(e.target.files))} style={{color:P.pTextMid,fontSize:13,marginBottom:12,display:"block",width:"100%"}}/>{uploadingAnamnese&&<p style={{color:P.pAccent,fontSize:13}}>Upload en cours…</p>}{uploadedAnamnese.length>0&&<div style={{marginTop:12}}>{uploadedAnamnese.map((f,i)=><FileTag key={i} name={f.name} theme="p"/>)}<Btn onClick={saveAnamnesePDF} disabled={savingAnamnese} variant="primary" style={{marginTop:12}}>{savingAnamnese?"Enregistrement…":"Enregistrer dans le dossier"}</Btn></div>}</div>)}
+            </div>
+          )}
+
+          {/* ── ONGLET PROFIL PSYCHO-ÉMOTIONNEL ── */}
+          {activeTab==="profilpsycho"&&(
+            <div>
+              {!profilPsycho?<EmptyState message={`${selected.prenom} n'a pas encore rempli son profil psycho-émotionnel.`} theme="p"/>:(()=>{
+                const profilsDef=profilPsycho.genre==="Homme"?PROFILS_HOMME:PROFILS_FEMME;
+                const scores=profilPsycho.scores||{};
+                const profilScores=profilsDef.map(p=>{
+                  const max=p.items.reduce((s,i)=>s+i.pts,0);
+                  const score=p.items.reduce((s,i)=>s+(scores[i.key]?i.pts:0),0);
+                  return{key:p.key,label:p.label,icon:p.icon,score,max};
+                });
+                return(
+                  <div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                      <p style={{color:P.pTextDim,fontSize:12}}>Dernière mise à jour le {new Date(profilPsycho.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p>
+                      <Btn onClick={()=>downloadProfilPsychoPDF(profilPsycho,selected.prenom)} variant="ghost" theme="p" small>⬇ PDF</Btn>
+                    </div>
+                    <ProfilDominantSummary profils={profilScores}/>
+                    {profilsDef.map(p=>{
+                      const checked=p.items.filter(i=>scores[i.key]);
+                      if(checked.length===0)return null;
+                      return(
+                        <div key={p.key} style={{background:P.pSurface,border:`1px solid ${P.pBorder}`,borderRadius:12,padding:"14px 16px",marginBottom:10}}>
+                          <p style={{color:P.pAccent,fontSize:13,fontWeight:600,marginBottom:8}}>{p.icon} {p.label}</p>
+                          <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                            {checked.map(i=><p key={i.key} style={{color:P.pTextMid,fontSize:12,lineHeight:1.5}}>· {i.label}</p>)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
