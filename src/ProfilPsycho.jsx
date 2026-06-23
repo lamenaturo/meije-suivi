@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { ProfilDominantSummary, ProfilQuestCard, PROFILS_FEMME, PROFILS_HOMME } from "./BilansFonctionnels";
 
@@ -101,6 +101,7 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
           userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "",
           genre, scores, date: new Date().toISOString(),
         });
+        await updateDoc(doc(db, "users", user.uid), { profilPsycho: { genre, scores, date: new Date().toISOString() } });
         setSaved(true);
       } catch (e) { console.error(e); }
       setSaving(false);
@@ -112,12 +113,15 @@ export default function ProfilPsycho({ user, onDone, genreConnu }) {
     const g = genreActuel || genre;
     const s = scoresActuels || scores;
     if (!g || !Object.values(s).some(Boolean)) return;
+    const payload = {
+      userUid: user.uid, userEmail: user.email,
+      userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "",
+      genre: g, scores: s, date: new Date().toISOString(),
+    };
     try {
-      await setDoc(doc(db, "profils_psycho", docId), {
-        userUid: user.uid, userEmail: user.email,
-        userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "",
-        genre: g, scores: s, date: new Date().toISOString(),
-      });
+      await setDoc(doc(db, "profils_psycho", docId), payload);
+      // Copie dans users/{uid} pour lecture praticienne via listener u0
+      await updateDoc(doc(db, "users", user.uid), { profilPsycho: { genre: g, scores: s, date: new Date().toISOString() } });
     } catch (e) { console.error(e); }
   };
 
