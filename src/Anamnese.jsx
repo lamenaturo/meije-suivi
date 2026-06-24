@@ -43,7 +43,7 @@ const initForm = () => ({
   heureCoucher: "", heureLever: "", nbreHeuresSommeil: "",
   qualiteSommeil: "", difficulteSommeil: [],
   etatReveil: "", energieMatin: "", energieApresMidi: "", energieSoir: "",
-  baisseEnergieMoment: "", cafeTasse: "", consommationStimulants: "", symptomesFatigue: [],
+  baisseEnergieMoment: "", cafeTasse: "", cafeHeures: "", consommationStimulants: "", symptomesFatigue: [],
   niveauStress: "", sourceStress: "", symptomesStress: [],
   humeurGenerale: [], anxieteAngoisses: "", suiviPsy: [],
   techniquesRelaxation: "", activitesRessourcantes: "",
@@ -105,6 +105,7 @@ const initForm = () => ({
   infect_ist: "", infect_vih: "",
   // Ajouts étapes existantes
   tca: "", traumaConnu: "", suiviPsyActuel: "",
+  evenementsVie: [], evenementsVieDetail: "",
   cannabis: "", tabacQuantiteLibre: "", alcoolQuantiteLibre: "",
   antecedentsFamiliauxPsy: "",
   visionDans6Mois: "", motivationChangement: "",
@@ -271,7 +272,7 @@ Coucher/Lever : ${val(form.heureCoucher)} — ${val(form.heureLever)} | Heures :
 Qualité : ${val(form.qualiteSommeil)}/10 | Réveil : ${val(form.etatReveil)}
 Énergie : matin ${val(form.energieMatin)}/10 | apm ${val(form.energieApresMidi)}/10 | soir ${val(form.energieSoir)}/10
 Difficultés sommeil : ${arr(form.difficulteSommeil)}
-Café/thé : ${val(form.cafeTasse)} | Symptômes fatigue : ${arr(form.symptomesFatigue)}
+Café/thé : ${val(form.cafeTasse)}${form.cafeHeures ? ` — Horaires : ${form.cafeHeures}` : ""} | Symptômes fatigue : ${arr(form.symptomesFatigue)}
 
 ══ 4. STRESS & SANTÉ MENTALE ══
 Stress : ${val(form.niveauStress)}/10 | Sources : ${val(form.sourceStress)}
@@ -526,9 +527,9 @@ export default function Anamnese({ user, onDone, readonly = false, existingData 
   useEffect(() => {
     if (!docId) return;
     const timer = setTimeout(async () => {
-      try { await updateDoc(doc(db, "anamneses", docId), { form, bilans: docs, bilanScores, date: new Date().toISOString() }); }
+      try { await updateDoc(doc(db, "anamneses", docId), { form, bilans: docs, bilanScores, pdfText: generatePdfText(form, user), date: new Date().toISOString() }); }
       catch (e) { console.error("Autosave:", e); }
-    }, 3000);
+    }, 1500);
     return () => clearTimeout(timer);
   }, [form, docs, docId, user]);
 
@@ -729,6 +730,11 @@ export default function Anamnese({ user, onDone, readonly = false, existingData 
             <div style={{ marginTop: 12 }}><Scale label="Niveau d'énergie le soir (vers 20h)" value={form.energieSoir} onChange={set("energieSoir")} /></div>
             <div style={{ marginTop: 16 }}><Field label="À quel moment ressens-tu des baisses d'énergie ?"><Input value={form.baisseEnergieMoment} onChange={set("baisseEnergieMoment")} placeholder="Ex : après le déjeuner, milieu d'après-midi..." /></Field></div>
             <Field label="Consommation de café ou thé par jour"><RadioInline options={["Aucun", "1 tasse", "2 tasses", "3 tasses", "4 tasses et +"]} value={form.cafeTasse} onChange={set("cafeTasse")} /></Field>
+            {form.cafeTasse && form.cafeTasse !== "Aucun" && (
+              <Field label="À quelles heures ? (précise si tu en prends plusieurs)">
+                <Input value={form.cafeHeures} onChange={set("cafeHeures")} placeholder="Ex : 7h30, 10h, 14h — dernier café avant 14h" />
+              </Field>
+            )}
             <Field label="Autres stimulants — quantité et horaires"><Input value={form.consommationStimulants} onChange={set("consommationStimulants")} placeholder="Ex : 1 Red Bull en fin d'après-midi..." /></Field>
             <Field label="Tu ressens :"><CheckGroup options={["Un besoin de faire des siestes", "Difficulté à te concentrer par fatigue", "Épuisement après un effort léger", "Aucun de ces symptômes"]} value={form.symptomesFatigue} onChange={set("symptomesFatigue")} /></Field>
             <NavButtons />
@@ -749,6 +755,33 @@ export default function Anamnese({ user, onDone, readonly = false, existingData 
             <Field label="As-tu ou as-tu eu des difficultés avec ton comportement alimentaire (TCA) ? (restriction, boulimie, compulsions…)"><RadioInline options={["Oui, actuellement", "Oui, dans le passé", "Non", "Je préfère ne pas répondre"]} value={form.tca} onChange={set("tca")} /></Field>
             <Field label="Pratiques-tu des techniques de relaxation ?"><Input value={form.techniquesRelaxation} onChange={set("techniquesRelaxation")} placeholder="Ex : méditation, yoga, respiration..." /></Field>
             <Field label="Activités qui te ressourcent"><Input value={form.activitesRessourcantes} onChange={set("activitesRessourcantes")} placeholder="Nature, lecture, amis, musique, cuisine..." /></Field>
+
+            <SectionTitle>Événements de vie</SectionTitle>
+            <div style={{ background: C.accentDim, border: `1px solid rgba(138,90,42,0.2)`, borderRadius: 12, padding: "12px 16px", marginBottom: 16 }}>
+              <p style={{ color: C.accent, fontSize: 13, lineHeight: 1.7, fontFamily: "DM Sans, sans-serif" }}>
+                Certains événements de vie peuvent avoir un impact durable sur les hormones, le cycle, le sommeil et l'immunité — parfois des années après. Tu n'es pas obligée de répondre à cette section. Si tu souhaites partager quelque chose, c'est uniquement pour m'aider à mieux comprendre ton histoire.
+              </p>
+            </div>
+            <Field label="As-tu traversé l'un de ces événements ? (plusieurs réponses possibles — tout est confidentiel)">
+              <CheckGroup options={[
+                "Deuil (perte d'un proche, fausse couche, IVG)",
+                "Séparation ou rupture difficile (divorce, trahison, infidélité)",
+                "Dépression (post-partum ou autre période)",
+                "Burn-out ou surmenage sévère",
+                "Violence dans une relation (physique ou psychologique)",
+                "Agression sexuelle ou abus",
+                "Enfance difficile (pression parentale, sentiment de ne jamais être assez, manque affectif)",
+                "Accident ou maladie grave (soi ou proche)",
+                "Période de grande instabilité (financière, logement, travail)",
+                "Autre événement difficile non listé ici",
+                "Je préfère ne pas répondre à cette section",
+              ]} value={form.evenementsVie} onChange={set("evenementsVie")} columns={1} />
+            </Field>
+            {form.evenementsVie.length > 0 && !form.evenementsVie.includes("Je préfère ne pas répondre à cette section") && (
+              <Field label="Si tu le souhaites, tu peux préciser (période, contexte, ce qui a changé depuis…)">
+                <Textarea value={form.evenementsVieDetail} onChange={set("evenementsVieDetail")} placeholder="Laisse vide si tu préfères — tout ce que tu partages m'aide à mieux adapter l'accompagnement." rows={3} />
+              </Field>
+            )}
             <NavButtons />
           </div>
         )}
