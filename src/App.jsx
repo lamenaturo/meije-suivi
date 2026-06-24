@@ -596,7 +596,7 @@ function Auth({ onLogin, onBack }) {
     try {
       const c = await signInWithEmailAndPassword(auth, email, password);
       const d = await getDoc(doc(db, "users", c.user.uid));
-      onLogin({ uid:c.user.uid, email, prénom:d.data()?.prénom||"", role:email===PRATICIENNE_EMAIL?"praticienne":"cliente" });
+      onLogin({ uid:c.user.uid, email, prénom:d.data()?.prénom||d.data()?.prenom||"", role:email===PRATICIENNE_EMAIL?"praticienne":"cliente" });
     } catch { setError("Email ou mot de passe incorrect."); }
     setLoading(false);
   };
