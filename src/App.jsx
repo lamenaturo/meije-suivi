@@ -16,6 +16,19 @@ const EMAILJS_TEMPLATE_BIENVENUE = "template_im5mm8v";
 const EMAILJS_PUBLIC = "zpxiv3rkIbtfdqAQ6";
 
 const fixPdfUrl = (url) => url;
+// Télécharge un fichier (bilan, photo…) directement sur l'appareil, sans passer par un nouvel onglet
+const telechargerFichier = async (url, nom) => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(String(res.status));
+    const blob = await res.blob();
+    const lien = document.createElement("a");
+    lien.href = URL.createObjectURL(blob);
+    lien.download = nom || "document";
+    document.body.appendChild(lien); lien.click(); lien.remove();
+    setTimeout(() => URL.revokeObjectURL(lien.href), 2000);
+  } catch { window.open(url, "_blank", "noopener"); }
+};
 
 const PHASES_CYCLE = ["Menstruelle", "Folliculaire", "Ovulation", "Lutéale", "Je ne sais pas"];
 
@@ -1346,11 +1359,11 @@ function Cliente({ user, onLogout }) {
             {[
               {key:"questionnaire",icon:"📋",label:"Questionnaire",badge:!hasAnamnese},
               {key:"protocole",icon:"🌿",label:"Protocole",badge:protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000},
-              {key:"suivi",icon:"📝",label:"Suivis",badge:false},
+              {key:"suivi",icon:"📅",label:"Avant mon rendez-vous",badge:false},
               {key:"documents",icon:"📁",label:"Mes documents",badge:false},
               {key:"profilpsycho",icon:"🧭",label:"Mon profil",badge:false},
             ].map(({key,icon,label,badge})=>{
-              const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivis",evolution:"evolution",documents:"docs",messages:"messages",profilpsycho:"profilpsycho"};
+              const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivisMensuel",evolution:"evolution",documents:"docs",messages:"messages",profilpsycho:"profilpsycho"};
               return(
                 <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)", ...(key==="profilpsycho"?{gridColumn:"1 / -1"}:{})}}>
                   {badge&&<span style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:P.cTerra}}/>}
@@ -1452,7 +1465,7 @@ function Cliente({ user, onLogout }) {
 
       {view==="suivisHebdo"&&(
         <div style={inner} className="fade-in">
-          <button onClick={()=>setView("suivis")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <button onClick={()=>setView("suivisMensuel")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
           <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Suivi hebdomadaire</p>
           <button onClick={()=>setView("suivi")} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"16px 18px",borderRadius:14,border:`1.5px solid ${P.cGreenBorder}`,background:P.cGreenDim,cursor:"pointer",textAlign:"left",marginBottom:8}}>
             <span style={{fontSize:22}}>📝</span>
@@ -1467,7 +1480,7 @@ function Cliente({ user, onLogout }) {
 
       {view==="suivisMensuel"&&(
         <div style={inner} className="fade-in">
-          <button onClick={()=>setView("suivis")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
+          <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
           <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:4}}>Avant mon rendez-vous</p>
           <p style={{color:P.cTextDim,fontSize:12,marginBottom:20,lineHeight:1.6}}>Remplis le questionnaire dans les jours qui précèdent ton rendez-vous : c'est ce qui permet à Meije de préparer la séance et d'ajuster ton protocole.</p>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -1490,6 +1503,7 @@ function Cliente({ user, onLogout }) {
               );
             })}
           </div>
+          <button onClick={()=>setView("suivisHebdo")} style={{background:"none",border:"none",color:P.cTextDim,fontSize:12,fontFamily:P.sans,marginTop:20,cursor:"pointer",textDecoration:"underline"}}>Journal de la semaine (facultatif)</button>
         </div>
       )}
 
@@ -1610,7 +1624,7 @@ function Cliente({ user, onLogout }) {
         <div style={inner} className="fade-in">
           <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
           <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:6}}>Mes documents</p>
-          <p style={{color:P.cTextMid,fontSize:13,marginBottom:24,lineHeight:1.6}}>Envoie tes bilans sanguins, photos, résultats…</p>
+          <p style={{color:P.cTextMid,fontSize:13,marginBottom:24,lineHeight:1.6}}>Envoie ici tes résultats d'analyses, bilans, photos… Meije est prévenue dès que tu les envoies, pas besoin de les lui envoyer par e-mail.</p>
           <div style={{background:P.cSurface,borderRadius:14,border:`1px solid ${P.cBorder}`,padding:"18px 20px",marginBottom:20}}>
             <div style={{background:P.cGreenDim,border:`0.5px solid ${P.cGreenBorder}`,borderRadius:8,padding:"10px 14px",marginBottom:14}}><p style={{color:P.cGreen,fontSize:12}}>📎 Max 10 MB. Si trop lourd → <a href="https://ilovepdf.com" target="_blank" rel="noreferrer" style={{color:P.cGreen,fontWeight:500}}>ilovepdf.com</a></p></div>
             <input type="file" multiple accept="image/*,application/pdf" onChange={e=>doUploadDocs(Array.from(e.target.files))} style={{color:P.cTextMid,fontSize:13,display:"block",width:"100%",marginBottom:8}}/>
@@ -2452,7 +2466,7 @@ function Praticienne({ user, onLogout }) {
           {activeTab==="documents"&&(
             <div>
               {documents.length===0?<EmptyState message={`Aucun document partagé par ${selected.prenom}.`} theme="p"/>
-                :documents.map(d=>(<div key={d.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"14px 18px",marginBottom:10}}><p style={{color:P.pTextDim,fontSize:11,marginBottom:10}}>{new Date(d.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{d.files?.map((f,i)=><a key={i} href={fixPdfUrl(f.url)} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:8,padding:"7px 12px",color:P.pAccent,fontSize:12,textDecoration:"none"}}><span>{f.type?.includes("image")?"🖼":"📄"}</span><span>{f.name}</span><span style={{opacity:0.6,fontSize:10}}>↓</span></a>)}</div></div>))}
+                :documents.map(d=>(<div key={d.id} style={{background:P.pSurface,borderRadius:12,border:`1px solid ${P.pBorder}`,padding:"14px 18px",marginBottom:10}}><p style={{color:P.pTextDim,fontSize:11,marginBottom:10}}>{new Date(d.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{d.files?.map((f,i)=><span key={i} style={{display:"inline-flex",alignItems:"center",gap:0,background:P.pAccentDim,border:`1px solid ${P.pAccentBorder}`,borderRadius:8,overflow:"hidden"}}><a href={fixPdfUrl(f.url)} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 12px",color:P.pAccent,fontSize:12,textDecoration:"none"}}><span>{f.type?.includes("image")?"🖼":"📄"}</span><span>{f.name}</span></a><button onClick={()=>telechargerFichier(f.url,`${selected.prenom}_${new Date(d.date).toISOString().slice(0,10)}_${f.name}`)} title="Télécharger" style={{background:"none",border:"none",borderLeft:`1px solid ${P.pAccentBorder}`,color:P.pAccent,fontSize:12,padding:"7px 10px",cursor:"pointer",fontFamily:P.sans}}>⬇ Télécharger</button></span>)}</div></div>))}
             </div>
           )}
 
