@@ -538,7 +538,7 @@ function LandingPage({ onEnter }) {
     { icon:"📋", title:"Ton questionnaire de santé", desc:"Remplis ton anamnèse et joins tes bilans directement depuis ton espace." },
     { icon:"🌿", title:"Ton protocole personnalisé", desc:"Une fois analysés, Meije te met à disposition ton protocole naturopathique." },
     { icon:"📝", title:"Avant chaque rendez-vous", desc:"Un questionnaire de suivi à remplir avant chaque séance, pour que Meije ajuste ton protocole." },
-    { icon:"📈", title:"Visualise tes progrès", desc:"Un graphique clair pour voir l'évolution de tes symptômes semaine après semaine." },
+    { icon:"💬", title:"Un échange sur WhatsApp", desc:"Un point chaque semaine et tes questions entre les séances, directement avec Meije." },
   ];
   return (
     <div style={{ minHeight:"100vh", background:P.pBg, fontFamily:P.sans, overflowX:"hidden", position:"relative", backgroundImage:"radial-gradient(ellipse at 20% 10%, rgba(200,133,108,0.14) 0%, transparent 50%), radial-gradient(ellipse at 85% 80%, rgba(122,158,130,0.1) 0%, transparent 50%)" }}>
@@ -1347,13 +1347,12 @@ function Cliente({ user, onLogout }) {
               {key:"questionnaire",icon:"📋",label:"Questionnaire",badge:!hasAnamnese},
               {key:"protocole",icon:"🌿",label:"Protocole",badge:protocoles.length>0&&Date.now()-new Date(protocoles[protocoles.length-1].date).getTime()<14*24*60*60*1000},
               {key:"suivi",icon:"📝",label:"Suivis",badge:false},
-              {key:"evolution",icon:"📈",label:"Mon évolution",badge:false},
               {key:"documents",icon:"📁",label:"Mes documents",badge:false},
               {key:"profilpsycho",icon:"🧭",label:"Mon profil",badge:false},
             ].map(({key,icon,label,badge})=>{
               const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivis",evolution:"evolution",documents:"docs",messages:"messages",profilpsycho:"profilpsycho"};
               return(
-                <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)"}}>
+                <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)", ...(key==="profilpsycho"?{gridColumn:"1 / -1"}:{})}}>
                   {badge&&<span style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:P.cTerra}}/>}
                   <span style={{fontSize:28}}>{icon}</span>
                   <p style={{color:P.cTextMid,fontSize:12,fontWeight:400,textAlign:"center",letterSpacing:"0.3px"}}>{label}</p>
