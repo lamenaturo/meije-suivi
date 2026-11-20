@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { collection, addDoc, doc, setDoc, getDoc, getDocs, query, orderBy, where, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { sendEmail, notifierMeije } from "./email";
 import Anamnese from "./Anamnese";
 import ProfilPsycho from "./ProfilPsycho";
 import { ProfilDominantSummary, PROFILS_FEMME, PROFILS_HOMME } from "./BilansFonctionnels";
@@ -11,9 +12,7 @@ const PRATICIENNE_EMAIL = process.env.REACT_APP_PRATICIENNE_EMAIL || "lamenaturo
 const INSTAGRAM = process.env.REACT_APP_INSTAGRAM || "https://www.instagram.com/meije.naturo";
 const CLOUD_NAME = "di45b4ymc";
 const UPLOAD_PRESET = "meije_naturo_public";
-const EMAILJS_SERVICE = "service_5bi57sr";
 const EMAILJS_TEMPLATE_BIENVENUE = "template_im5mm8v";
-const EMAILJS_PUBLIC = "zpxiv3rkIbtfdqAQ6";
 
 const fixPdfUrl = (url) => url;
 // Télécharge un fichier (bilan, photo…) directement sur l'appareil, sans passer par un nouvel onglet
@@ -359,14 +358,6 @@ const GLOBAL_CSS = `
   .slide-up { animation: slideUp 0.35s ease forwards; }
 `;
 
-const sendEmail = async (templateId, params) => {
-  try {
-    if (window.emailjs) {
-      window.emailjs.init(EMAILJS_PUBLIC);
-      await window.emailjs.send(EMAILJS_SERVICE, templateId, params);
-    }
-  } catch (e) { console.error("Email error:", e); }
-};
 
 const wk = () => {
   const n = new Date(); const s = new Date(n);
@@ -628,6 +619,7 @@ function Auth({ onLogin, onBack }) {
     try {
       const c = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, "users", c.user.uid), { prenom:prenom.trim(), email:email.trim(), role:"cliente", statut:"en cours", createdAt:new Date().toISOString(), complements:[], rappelsActifs:true });
+      notifierMeije(prenom.trim(), "vient de créer son compte");
       await signOut(auth);
       setRegisterOk(true);
     } catch(e) {
@@ -977,7 +969,7 @@ function SuiviRdv({ user, numRdv, existingData, onDone }) {
       } else {
         const { setDoc: sd } = await import("firebase/firestore");
         await sd(doc(db, "suivis_rdv", `${user.uid}_rdv${numRdv}`), data);
-        try { await sendEmail(EMAILJS_TEMPLATE_BIENVENUE, { prenom: user.prénom, action: `a rempli son questionnaire de suivi consultation ${numRdv}`, to_email: PRATICIENNE_EMAIL }); } catch {}
+        try { await notifierMeije(user.prénom, `a rempli son questionnaire avant rendez-vous (${labelSuiviRdv(numRdv)})`); } catch {}
       }
       setSaved(true);
       showToast("Questionnaire envoyé à Meije ✓");
@@ -1278,9 +1270,9 @@ function Cliente({ user, onLogout }) {
       journalAlimentaire, documents:uploadDocs,
     };
     await addDoc(collection(db,"entries"), entryData);
-    try{await sendEmail(EMAILJS_TEMPLATE_BIENVENUE,{prenom:user.prénom,action:"a rempli son suivi",to_email:PRATICIENNE_EMAIL});}catch{}
+    try{await notifierMeije(user.prénom, "a rempli son suivi");}catch{}
     if(commentaireCliente){
-      try{await sendEmail(EMAILJS_TEMPLATE_BIENVENUE,{prenom:user.prénom,action:"a laissé un commentaire sur son suivi",to_email:PRATICIENNE_EMAIL});}catch{}
+      try{await notifierMeije(user.prénom, "a laissé un commentaire sur son suivi");}catch{}
     }
     setScores({});setNotes({});setScoresProfi({});setCyclePhase("");setCycleNote("");
     setComplementsPris({});setHumeur("");setConfidences("");setCommentaireCliente("");
@@ -1629,7 +1621,7 @@ function Cliente({ user, onLogout }) {
             <div style={{background:P.cGreenDim,border:`0.5px solid ${P.cGreenBorder}`,borderRadius:8,padding:"10px 14px",marginBottom:14}}><p style={{color:P.cGreen,fontSize:12}}>📎 Max 10 MB. Si trop lourd → <a href="https://ilovepdf.com" target="_blank" rel="noreferrer" style={{color:P.cGreen,fontWeight:500}}>ilovepdf.com</a></p></div>
             <input type="file" multiple accept="image/*,application/pdf" onChange={e=>doUploadDocs(Array.from(e.target.files))} style={{color:P.cTextMid,fontSize:13,display:"block",width:"100%",marginBottom:8}}/>
             {uploadingDocs&&<p style={{color:P.cGreen,fontSize:13,marginTop:10}}>Upload en cours…</p>}
-            {uploadDocs.length>0&&<div style={{marginTop:14}}>{uploadDocs.map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"8px 12px",marginBottom:6}}><span style={{color:P.cGreen,fontSize:12}}>📎 {d.name}</span><button onClick={()=>setUploadDocs(prev=>prev.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:P.cTextMid,fontSize:18,cursor:"pointer",lineHeight:1}}>×</button></div>)}<Btn variant="cPrimary" onClick={async()=>{await addDoc(collection(db,"documents"),{userUid:user.uid,userEmail:user.email,date:new Date().toISOString(),files:uploadDocs});try{await sendEmail(EMAILJS_TEMPLATE_BIENVENUE,{prenom:user.prénom,action:"a partagé des documents",to_email:PRATICIENNE_EMAIL});}catch{}setUploadDocs([]);showToast("Documents envoyés ✓");}} style={{marginTop:12,width:"100%"}}>Envoyer à Meije</Btn></div>}
+            {uploadDocs.length>0&&<div style={{marginTop:14}}>{uploadDocs.map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"8px 12px",marginBottom:6}}><span style={{color:P.cGreen,fontSize:12}}>📎 {d.name}</span><button onClick={()=>setUploadDocs(prev=>prev.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:P.cTextMid,fontSize:18,cursor:"pointer",lineHeight:1}}>×</button></div>)}<Btn variant="cPrimary" onClick={async()=>{await addDoc(collection(db,"documents"),{userUid:user.uid,userEmail:user.email,date:new Date().toISOString(),files:uploadDocs});try{await notifierMeije(user.prénom, "a partagé des documents");}catch{}setUploadDocs([]);showToast("Documents envoyés ✓");}} style={{marginTop:12,width:"100%"}}>Envoyer à Meije</Btn></div>}
           </div>
           {documents.length>0&&(<div style={{marginTop:8}}><p style={{color:P.cTextMid,fontSize:12,marginBottom:10}}>Bilans déjà envoyés :</p>{documents.map(d=>(<div key={d.id} style={{background:P.cSurface,borderRadius:12,border:`1px solid ${P.cBorder}`,padding:"12px 16px",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}><p style={{color:P.cTextDim,fontSize:11}}>{new Date(d.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}</p><button onClick={()=>deleteDocument(d.id)} style={{background:"none",border:"none",color:"#B5583A",fontSize:18,lineHeight:1,cursor:"pointer",padding:"0 4px"}}>×</button></div><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{d.files?.map((f,i)=><a key={i} href={fixPdfUrl(f.url)} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:5,background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:8,padding:"6px 10px",color:P.cGreen,fontSize:12,textDecoration:"none"}}><span>{f.type?.includes("image")?"🖼":"📄"}</span><span>{f.name}</span><span style={{opacity:0.6,fontSize:10}}>↓</span></a>)}</div></div>))}</div>)}
         </div>
@@ -1852,7 +1844,7 @@ function Praticienne({ user, onLogout }) {
     if(!rep?.trim())return;
     setSavingReponse(p=>({...p,[entryId]:true}));
     await updateDoc(doc(db,"entries",entryId),{reponsePraticienne:rep.trim(),reponseDate:new Date().toISOString()});
-    try{const entry=entries.find(e=>e.id===entryId);await sendEmail(EMAILJS_TEMPLATE_BIENVENUE,{prenom:selected.prenom,action:"a répondu à ton suivi",to_email:selected.email});}catch{}
+    // (pas d'e-mail ici : le modèle EmailJS « bienvenue » n'est pas fait pour ce message)
     setReponseEnCours(p=>({...p,[entryId]:""}));
     setSavingReponse(p=>({...p,[entryId]:false}));
     showToast("Réponse envoyée ✓");

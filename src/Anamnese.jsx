@@ -2,6 +2,7 @@ import BilansFonctionnels from "./BilansFonctionnels";
 import { useState, useEffect } from "react";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import { notifierMeije } from "./email";
 
 const C = {
   bg: "#E8DDD0", surface: "#F5EDE2", surface2: "#DDD0C0",
@@ -574,6 +575,7 @@ export default function Anamnese({ user, onDone, readonly = false, existingData 
       const data = { userUid: user.uid, userEmail: user.email, userPrenom: user.prénom || user.displayName || user.email?.split("@")[0] || "", date: new Date().toISOString(), form, bilans: docs, bilanScores, pdfText: generatePdfText(form, user) };
       if (docId) { await updateDoc(doc(db, "anamneses", docId), data); }
       else { const ref = await addDoc(collection(db, "anamneses"), data); setDocId(ref.id); }
+      notifierMeije(data.userPrenom, saved ? "a mis à jour son questionnaire de santé" : "a envoyé son questionnaire de santé");
       setSaved(true);
     } catch (e) { console.error(e); }
     setSaving(false);
