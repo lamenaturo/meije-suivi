@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { collection, addDoc, doc, setDoc, getDoc, getDocs, query, orderBy, where, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import { sendEmail, notifierMeije } from "./email";
+import { notifierMeije } from "./email";
 import Anamnese from "./Anamnese";
 import ProfilPsycho from "./ProfilPsycho";
 import { ProfilDominantSummary, PROFILS_FEMME, PROFILS_HOMME } from "./BilansFonctionnels";
@@ -12,7 +12,6 @@ const PRATICIENNE_EMAIL = process.env.REACT_APP_PRATICIENNE_EMAIL || "lamenaturo
 const INSTAGRAM = process.env.REACT_APP_INSTAGRAM || "https://www.instagram.com/meije.naturo";
 const CLOUD_NAME = "di45b4ymc";
 const UPLOAD_PRESET = "meije_naturo_public";
-const EMAILJS_TEMPLATE_BIENVENUE = "template_im5mm8v";
 
 const fixPdfUrl = (url) => url;
 // Télécharge un fichier (bilan, photo…) directement sur l'appareil, sans passer par un nouvel onglet
@@ -1859,7 +1858,6 @@ function Praticienne({ user, onLogout }) {
       const secondaryAuth=getAuth(secondaryApp);const c=await createUser(secondaryAuth,newClientForm.email,newClientForm.password);
       await setDoc(doc(db,"users",c.user.uid),{prenom:newClientForm.prenom,email:newClientForm.email,role:"cliente",createdAt:new Date().toISOString(),complements:[],rappelsActifs:true});
       await secondaryAuth.signOut();
-      await sendEmail(EMAILJS_TEMPLATE_BIENVENUE,{prenom:newClientForm.prenom,to_email:newClientForm.email});
       setNewClientForm({prenom:"",email:"",password:""});setShowNewClient(false);
       showToast("Espace créé pour "+newClientForm.prenom+" ✓");
     }catch(e){alert("Erreur : "+e.message);}
