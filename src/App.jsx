@@ -12,7 +12,6 @@ const INSTAGRAM = process.env.REACT_APP_INSTAGRAM || "https://www.instagram.com/
 const CLOUD_NAME = "di45b4ymc";
 const UPLOAD_PRESET = "meije_naturo_public";
 const EMAILJS_SERVICE = "service_5bi57sr";
-const EMAILJS_TEMPLATE_RAPPEL_SUIVI = "template_rappel_suivi";
 const EMAILJS_TEMPLATE_BIENVENUE = "template_im5mm8v";
 const EMAILJS_PUBLIC = "zpxiv3rkIbtfdqAQ6";
 
@@ -538,7 +537,7 @@ function LandingPage({ onEnter }) {
   const features = [
     { icon:"📋", title:"Ton questionnaire de santé", desc:"Remplis ton anamnèse et joins tes bilans directement depuis ton espace." },
     { icon:"🌿", title:"Ton protocole personnalisé", desc:"Une fois analysés, Meije te met à disposition ton protocole naturopathique." },
-    { icon:"📝", title:"Suivi hebdomadaire", desc:"Chaque semaine, remplis ton suivi pour que Meije puisse ajuster ton accompagnement." },
+    { icon:"📝", title:"Avant chaque rendez-vous", desc:"Un questionnaire de suivi à remplir avant chaque séance, pour que Meije ajuste ton protocole." },
     { icon:"📈", title:"Visualise tes progrès", desc:"Un graphique clair pour voir l'évolution de tes symptômes semaine après semaine." },
   ];
   return (
@@ -1170,6 +1169,8 @@ const CLIENT_NAV = [
   { key:"moi", label:"Mon dossier", icon:"👤" },
 ];
 
+const labelSuiviRdv=(n)=>n===1?"Suivi à 1 mois":n===2?"Suivi à 2 mois":n===3?"Bilan final à 3 mois":`Consultation ${n}`;
+
 function Cliente({ user, onLogout }) {
   const [entries,setEntries]=useState([]);const [messages,setMessages]=useState([]);
   const [anamneses,setAnamneses]=useState([]);const [complements,setComplements]=useState([]);
@@ -1230,16 +1231,8 @@ function Cliente({ user, onLogout }) {
         setShowAnamnesePopup(true);
       }
     }
-    const lastEntry=entries[entries.length-1];
-    const daysSince=lastEntry?Math.floor((Date.now()-new Date(lastEntry.date).getTime())/(1000*60*60*24)):99;
-    if(daysSince>=6){
-      const RAPPEL_KEY=`rappel_suivi_sent_${user.uid}_${new Date().toISOString().slice(0,10)}`;
-      if(!sessionStorage.getItem(RAPPEL_KEY)){
-        sessionStorage.setItem(RAPPEL_KEY,"1");
-        sendEmail(EMAILJS_TEMPLATE_RAPPEL_SUIVI,{prenom:user.prénom,to_email:user.email,lien:"https://meije-suivi.vercel.app"}).catch(()=>{});
-      }
-    }
-  },[loading,hasAnamnese,entries,user.uid]);
+    // Le point hebdomadaire se fait désormais sur WhatsApp : plus de rappel e-mail hebdo.
+  },[loading,hasAnamnese,user.uid]);
 
   const uploadToCloudinaryClient=async(file,folder)=>{
     const fd=new FormData();fd.append("file",file);fd.append("upload_preset",UPLOAD_PRESET);fd.append("folder",folder);
@@ -1337,8 +1330,11 @@ function Cliente({ user, onLogout }) {
           {(()=>{
             const alerts=[];
             if(!hasAnamnese)alerts.push(<button key="qst" onClick={()=>setAnamneseView(true)} style={{width:"100%",background:P.cTerraDim,border:`1px solid rgba(181,88,58,0.25)`,borderRadius:14,padding:"14px 18px",marginBottom:10,textAlign:"left",cursor:"pointer"}}><p style={{fontSize:10,color:P.cTerra,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:4}}>📋 Action requise</p><p style={{color:P.cText,fontSize:13,fontWeight:500}}>Remplis ton questionnaire de santé →</p></button>);
-            const lastEntry=entries[entries.length-1];const daysSince=lastEntry?Math.floor((Date.now()-new Date(lastEntry.date).getTime())/(1000*60*60*24)):99;
-            if(daysSince>=6)alerts.push(<button key="suivi" onClick={()=>setView("suivi")} style={{width:"100%",background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:14,padding:"14px 18px",marginBottom:10,textAlign:"left",cursor:"pointer"}}><p style={{fontSize:10,color:P.cGreen,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:4}}>📝 Suivi de la semaine</p><p style={{color:P.cText,fontSize:13}}>C'est l'heure de remplir ton suivi →</p></button>);
+            // Rappel du questionnaire avant le prochain rendez-vous : 3 semaines après le dernier protocole, s'il n'est pas encore rempli
+            const lastProto=protocoles[protocoles.length-1];
+            const nextRdvNum=suiviRdvList.length+1;
+            const suiviDepuisProto=lastProto&&suiviRdvList.some(s=>new Date(s.date).getTime()>new Date(lastProto.date).getTime());
+            if(lastProto&&!suiviDepuisProto&&nextRdvNum<=3&&Date.now()-new Date(lastProto.date).getTime()>=21*24*60*60*1000)alerts.push(<button key="suivi" onClick={()=>{setSuiviRdvNum(nextRdvNum);setSuiviRdvView(true);}} style={{width:"100%",background:P.cGreenDim,border:`1px solid ${P.cGreenBorder}`,borderRadius:14,padding:"14px 18px",marginBottom:10,textAlign:"left",cursor:"pointer"}}><p style={{fontSize:10,color:P.cGreen,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:4}}>📝 Avant ton prochain rendez-vous</p><p style={{color:P.cText,fontSize:13}}>Remplis ton questionnaire de suivi ({labelSuiviRdv(nextRdvNum)}) →</p></button>);
             if(lm&&Date.now()-new Date(lm.date).getTime()<7*24*60*60*1000)alerts.push(<div key="msg" style={{background:P.cSurface,border:`1px solid ${P.cGreenBorder}`,borderRadius:14,padding:"14px 18px",marginBottom:10}}><p style={{fontSize:10,color:P.cGreen,textTransform:"uppercase",letterSpacing:"1.5px",marginBottom:4}}>💬 Nouveau message de Meije</p><p style={{color:P.cText,fontSize:13,lineHeight:1.6}}>{lm.text}</p></div>);
             // Notif réponse praticienne sur suivi
             const lastEntryWithReponse = [...entries].reverse().find(e => e.reponsePraticienne && e.reponseDate && Date.now()-new Date(e.reponseDate).getTime()<7*24*60*60*1000);
@@ -1353,12 +1349,11 @@ function Cliente({ user, onLogout }) {
               {key:"suivi",icon:"📝",label:"Suivis",badge:false},
               {key:"evolution",icon:"📈",label:"Mon évolution",badge:false},
               {key:"documents",icon:"📁",label:"Mes documents",badge:false},
-              {key:"messages",icon:"💬",label:"Messages",badge:lm&&Date.now()-new Date(lm.date).getTime()<7*24*60*60*1000},
               {key:"profilpsycho",icon:"🧭",label:"Mon profil",badge:false},
             ].map(({key,icon,label,badge})=>{
               const navMap = {questionnaire:"questionnaire",protocole:"protocoles",suivi:"suivis",evolution:"evolution",documents:"docs",messages:"messages",profilpsycho:"profilpsycho"};
               return(
-                <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)", ...(key==="profilpsycho"?{gridColumn:"1 / -1"}:{})}}>
+                <button key={key} onClick={()=>setView(navMap[key]||key)} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer",position:"relative",transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:"0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)"}}>
                   {badge&&<span style={{position:"absolute",top:10,right:10,width:8,height:8,borderRadius:"50%",background:P.cTerra}}/>}
                   <span style={{fontSize:28}}>{icon}</span>
                   <p style={{color:P.cTextMid,fontSize:12,fontWeight:400,textAlign:"center",letterSpacing:"0.3px"}}>{label}</p>
@@ -1444,13 +1439,13 @@ function Cliente({ user, onLogout }) {
           <button onClick={()=>setView("home")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
           <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Mes suivis</p>
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
+            <button onClick={()=>setView("suivisMensuel")} style={{background:P.cGreenDim,border:`1.5px solid ${P.cGreenBorder}`,borderRadius:18,padding:"24px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer"}}>
+              <span style={{fontSize:28}}>📅</span>
+              <p style={{color:P.cGreen,fontSize:13,fontWeight:600,textAlign:"center"}}>Avant mon rendez-vous</p>
+            </button>
             <button onClick={()=>setView("suivisHebdo")} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"24px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer"}}>
               <span style={{fontSize:28}}>📝</span>
-              <p style={{color:P.cTextMid,fontSize:13,fontWeight:500,textAlign:"center"}}>Hebdomadaire</p>
-            </button>
-            <button onClick={()=>setView("suivisMensuel")} style={{background:P.cSurface,border:`1px solid ${P.cBorder}`,borderRadius:18,padding:"24px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,cursor:"pointer"}}>
-              <span style={{fontSize:28}}>📅</span>
-              <p style={{color:P.cTextMid,fontSize:13,fontWeight:500,textAlign:"center"}}>Mensuel</p>
+              <p style={{color:P.cTextMid,fontSize:13,fontWeight:500,textAlign:"center"}}>Journal de la semaine<br/><span style={{fontSize:11,color:P.cTextDim,fontWeight:400}}>facultatif</span></p>
             </button>
           </div>
         </div>
@@ -1474,7 +1469,8 @@ function Cliente({ user, onLogout }) {
       {view==="suivisMensuel"&&(
         <div style={inner} className="fade-in">
           <button onClick={()=>setView("suivis")} style={{background:"none",border:"none",color:P.cTextMid,fontSize:13,fontFamily:P.sans,marginBottom:16,cursor:"pointer"}}>← Retour</button>
-          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:20}}>Suivi mensuel — par consultation</p>
+          <p style={{fontFamily:P.serif,fontSize:22,color:P.cText,fontWeight:300,marginBottom:4}}>Avant mon rendez-vous</p>
+          <p style={{color:P.cTextDim,fontSize:12,marginBottom:20,lineHeight:1.6}}>Remplis le questionnaire dans les jours qui précèdent ton rendez-vous : c'est ce qui permet à Meije de préparer la séance et d'ajuster ton protocole.</p>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {[1,2,3,4,5,6].map(n=>{
               const done=suiviRdvList.some(s=>Number(s.numRdv)===n);
@@ -1486,7 +1482,7 @@ function Cliente({ user, onLogout }) {
                   <div style={{display:"flex",alignItems:"center",gap:12}}>
                     <span style={{fontSize:18}}>{done?"✅":locked?"🔒":"📋"}</span>
                     <div>
-                      <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cText,fontSize:13,fontWeight:done?600:500}}>Consultation {n}</p>
+                      <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cText,fontSize:13,fontWeight:done?600:500}}>{labelSuiviRdv(n)}</p>
                       <p style={{color:done?P.cGreen:locked?P.cTextDim:P.cTextMid,fontSize:11,marginTop:2}}>{done?"Rempli ✓":locked?`Remplis d'abord la consultation ${n-1}`:"À remplir avant le rendez-vous"}</p>
                     </div>
                   </div>
