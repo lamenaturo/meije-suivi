@@ -355,7 +355,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
   const newPage = () => {
     pdf.addPage(); y = 18;
     pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
-    pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
+    pdf.text("Meije Delmonte — Document confidentiel", marginL, pageH - 8);
     pdf.text(`${pdf.internal.getNumberOfPages()}`, pageW - marginR, pageH - 8, { align: "right" });
     pdf.setTextColor(40, 25, 12);
   };
@@ -390,7 +390,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
   const dateStr = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   pdf.text(`${prenom ? prenom + "  •  " : ""}${user?.email || ""}  •  ${dateStr}  •  ${form.genre || ""}`, marginL, y); y += 10;
   pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
-  pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
+  pdf.text("Meije Delmonte — Document confidentiel", marginL, pageH - 8);
   pdf.text("1", pageW - marginR, pageH - 8, { align: "right" }); pdf.setTextColor(40, 25, 12);
   addSection("1. Informations générales & Motif");
   addRow("Genre", valP(form.genre)); addRow("Profession", valP(form.profession));
@@ -500,7 +500,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
   const totalPages = pdf.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
-    pdf.text("meije.naturo — Document confidentiel", marginL, pageH - 8);
+    pdf.text("Meije Delmonte — Document confidentiel", marginL, pageH - 8);
     pdf.text(String(i), pageW - marginR, pageH - 8, { align: "right" });
   }
   pdf.save(`anamnese_${(prenom||"client").toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
@@ -610,7 +610,7 @@ export default function Anamnese({ user, onDone, readonly = false, existingData 
     return (
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", background: C.bg, fontFamily: "DM Sans, sans-serif", position: "relative" }}>
         <button onClick={onDone} style={{ position: "absolute", top: 20, right: 20, background: "none", border: "none", color: C.textMid, fontSize: 22, cursor: "pointer" }}>×</button>
-        <p style={{ color: C.terra, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 12, fontWeight: 700 }}>meije.naturo</p>
+        <p style={{ color: C.terra, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 12, fontWeight: 700 }}>Meije Delmonte</p>
         <h1 style={{ fontFamily: "Georgia, serif", fontSize: "clamp(24px, 5vw, 36px)", color: C.text, fontWeight: 300, textAlign: "center", marginBottom: 10, lineHeight: 1.3 }}>Questionnaire de santé</h1>
         <p style={{ color: C.textMid, fontSize: 15, textAlign: "center", marginBottom: 48, maxWidth: 400, lineHeight: 1.7 }}>
           Avant de commencer, dis-moi à qui je m'adresse pour que les questions soient adaptées à ta situation.

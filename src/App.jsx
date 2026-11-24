@@ -579,7 +579,7 @@ function LandingPage({ onEnter }) {
         </div>
       </div>
       <div style={{ textAlign:"center", padding:"16px 20px 40px", borderTop:`1px solid ${P.pBorder}` }}>
-        <p style={{ color:P.pTextDim, fontSize:11 }}>Espace confidentiel · Données protégées · meije.naturo © 2026</p>
+        <p style={{ color:P.pTextDim, fontSize:11 }}>Espace confidentiel · Données protégées · Meije Delmonte © 2026</p>
       </div>
     </div>
   );
@@ -1319,7 +1319,7 @@ function Cliente({ user, onLogout }) {
         <div style={{maxWidth:600,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <p style={{fontFamily:P.serif,fontSize:20,color:P.cText,fontWeight:300,letterSpacing:"0.5px"}}>Bonjour <em style={{fontStyle:"italic",color:P.cGreen}}>{user.prénom}</em></p>
-            <p style={{fontSize:11,color:P.cTextDim,letterSpacing:"1px",textTransform:"uppercase",marginTop:1}}>meije.naturo</p>
+            <p style={{fontSize:11,color:P.cTextDim,letterSpacing:"1px",textTransform:"uppercase",marginTop:1}}>Meije Delmonte</p>
           </div>
           <button onClick={onLogout} style={{background:"none",border:"none",fontFamily:P.sans,fontSize:12,color:P.cTextDim,cursor:"pointer"}}>Déconnexion</button>
         </div>
@@ -2505,7 +2505,7 @@ export default function App() {
     return u;
   },[]);
   const logout=async()=>{await signOut(auth);setUser(null);setShowLanding(true);};
-  if(checking)return<div style={{minHeight:"100vh",background:P.pBg,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{fontFamily:P.serif,fontSize:22,color:P.pTextDim,fontWeight:300,letterSpacing:"1px"}}>meije.naturo</p></div>;
+  if(checking)return<div style={{minHeight:"100vh",background:P.pBg,display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{fontFamily:P.serif,fontSize:22,color:P.pTextDim,fontWeight:300,letterSpacing:"1px"}}>Meije Delmonte</p></div>;
   return(
     <>
       <style>{GLOBAL_CSS}</style>
