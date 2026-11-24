@@ -9,7 +9,7 @@ import { ProfilDominantSummary, PROFILS_FEMME, PROFILS_HOMME } from "./BilansFon
 import { getSystemClient, getSystemPraticienne } from "./normes";
 
 const PRATICIENNE_EMAIL = process.env.REACT_APP_PRATICIENNE_EMAIL || "lamenaturo@gmail.com";
-const INSTAGRAM = process.env.REACT_APP_INSTAGRAM || "https://www.instagram.com/meije.naturo";
+const INSTAGRAM = process.env.REACT_APP_INSTAGRAM || "https://www.instagram.com/meijedelmonte";
 const CLOUD_NAME = "di45b4ymc";
 const UPLOAD_PRESET = "meije_naturo_public";
 
