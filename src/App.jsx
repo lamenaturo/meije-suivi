@@ -1320,6 +1320,7 @@ function Cliente({ user, onLogout }) {
           <div>
             <p style={{fontFamily:P.serif,fontSize:20,color:P.cText,fontWeight:300,letterSpacing:"0.5px"}}>Bonjour <em style={{fontStyle:"italic",color:P.cGreen}}>{user.prénom}</em></p>
             <p style={{fontSize:11,color:P.cTextDim,letterSpacing:"1px",textTransform:"uppercase",marginTop:1}}>Meije Delmonte</p>
+            <p style={{fontSize:11,color:P.cTextDim,marginTop:1}}>Praticienne en santé hormonale féminine</p>
           </div>
           <button onClick={onLogout} style={{background:"none",border:"none",fontFamily:P.sans,fontSize:12,color:P.cTextDim,cursor:"pointer"}}>Déconnexion</button>
         </div>

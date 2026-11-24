@@ -355,7 +355,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
   const newPage = () => {
     pdf.addPage(); y = 18;
     pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
-    pdf.text("Meije Delmonte — Document confidentiel", marginL, pageH - 8);
+    pdf.text("Meije Delmonte · Praticienne en santé hormonale féminine — Document confidentiel", marginL, pageH - 8);
     pdf.text(`${pdf.internal.getNumberOfPages()}`, pageW - marginR, pageH - 8, { align: "right" });
     pdf.setTextColor(40, 25, 12);
   };
@@ -390,7 +390,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
   const dateStr = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
   pdf.text(`${prenom ? prenom + "  •  " : ""}${user?.email || ""}  •  ${dateStr}  •  ${form.genre || ""}`, marginL, y); y += 10;
   pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
-  pdf.text("Meije Delmonte — Document confidentiel", marginL, pageH - 8);
+  pdf.text("Meije Delmonte · Praticienne en santé hormonale féminine — Document confidentiel", marginL, pageH - 8);
   pdf.text("1", pageW - marginR, pageH - 8, { align: "right" }); pdf.setTextColor(40, 25, 12);
   addSection("1. Informations générales & Motif");
   addRow("Genre", valP(form.genre)); addRow("Profession", valP(form.profession));
@@ -500,7 +500,7 @@ async function downloadAnamnesePDF(form, user, bilans = []) {
   const totalPages = pdf.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i); pdf.setFontSize(8); pdf.setTextColor(200, 185, 170);
-    pdf.text("Meije Delmonte — Document confidentiel", marginL, pageH - 8);
+    pdf.text("Meije Delmonte · Praticienne en santé hormonale féminine — Document confidentiel", marginL, pageH - 8);
     pdf.text(String(i), pageW - marginR, pageH - 8, { align: "right" });
   }
   pdf.save(`anamnese_${(prenom||"client").toLowerCase().replace(/\s+/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
